@@ -3,7 +3,7 @@
 import { usePena } from "@/context/PenaContext";
 import Link from "next/link";
 import { usePathname, useParams } from "next/navigation";
-import { Calendar, MessageCircle, DollarSign, Utensils, Calculator, Settings, Sparkles, Plus, LogIn, ChevronDown, Home, ShoppingCart, Copy, Check } from "lucide-react";
+import { Calendar, MessageCircle, DollarSign, Utensils, Calculator, Settings, Sparkles, Plus, LogIn, ChevronDown, Home, ShoppingCart, Copy, Check, LogOut } from "lucide-react";
 import { Clock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
@@ -28,6 +28,23 @@ export default function FiestaLayout({ children }: { children: React.ReactNode }
   const [fiestas, setFiestas] = useState<{id:string;nombre:string;fecha_inicio:string;fecha_fin:string}[]>([]);
   const [fiestasOpen, setFiestasOpen] = useState(false);
   const [slugCopied, setSlugCopied] = useState(false);
+
+  const handleLogout = async () => {
+    const s = createClient();
+    if (s) await s.auth.signOut();
+    window.location.href = "/auth";
+  };
+
+  const handleLeavePena = async () => {
+    if (!activePena || !memberships[0]) return;
+    if (!confirm("Seguro que quieres salir de " + activePena.nombre + "?")) return;
+    const s = createClient();
+    if (!s) return;
+    const { data: { user } } = await s.auth.getUser();
+    if (!user) return;
+    await s.from("users_penas").delete().eq("user_id", user.id).eq("pena_id", activePena.id);
+    window.location.reload();
+  };
   const fiestasRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -147,6 +164,11 @@ export default function FiestaLayout({ children }: { children: React.ReactNode }
                     <div className="border-t-2 border-[var(--border-color)] mt-1 pt-1">
                       <Link href="/pena/crear" onClick={() => setMenuOpen(false)} className="block px-4 py-2 text-sm font-bold lowercase hover:bg-[var(--bg-page)]">+ crear peña</Link>
                       <Link href="/pena/unirse" onClick={() => setMenuOpen(false)} className="block px-4 py-2 text-sm font-bold lowercase hover:bg-[var(--bg-page)]">+ unirse a peña</Link>
+                      <div className="border-t-2 border-[var(--border-color)] mt-1 pt-1">
+                        <button onClick={() => { setMenuOpen(false); handleLeavePena(); }} className="w-full text-left px-4 py-2 text-sm font-bold lowercase hover:bg-red-50 text-[var(--color-primary)] transition">
+                          salir de {activePena.nombre}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -158,6 +180,9 @@ export default function FiestaLayout({ children }: { children: React.ReactNode }
             <Link href="/pena/unirse" className="flex items-center gap-1 px-2 sm:px-3 py-1.5 bg-[var(--bg-page)] border-brutalist shadow-brutalist-sm rounded-[var(--radius-md)] press-down text-xs sm:text-sm font-bold lowercase">
               <LogIn className="w-3 h-3 sm:w-4 sm:h-4" /> unirse
             </Link>
+            <button onClick={handleLogout} className="flex items-center gap-1 px-2 sm:px-3 py-1.5 bg-[var(--bg-page)] border-brutalist shadow-brutalist-sm rounded-[var(--radius-md)] press-down text-xs sm:text-sm font-bold lowercase hover:bg-red-50" title="Cerrar sesion">
+              <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />
+            </button>
           </div>
         </div>
       </nav>
