@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { usePena } from "@/context/PenaContext";
+import { useParams } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +14,9 @@ import { Plus, Check } from "lucide-react";
 import type { Gasto, Fiesta, UserPena } from "@/types/database";
 
 export default function FinanzasPage() {
-  const { pena, userPena } = usePena();
+  const { activePena: pena, activeUserPena: userPena } = usePena();
+  const params = useParams<{ id: string }>();
+  const fiestaId = params.id;
   const supabase = createClient();
   const [gastos, setGastos] = useState<(Gasto & { creador?: UserPena; beneficiario?: UserPena })[]>([]);
   const [fiestas, setFiestas] = useState<Fiesta[]>([]);
@@ -22,7 +25,7 @@ export default function FinanzasPage() {
   const [loading, setLoading] = useState(true);
   const isAdmin = userPena?.rol === "admin" || userPena?.rol === "mod";
 
-  const [form, setForm] = useState({ tipo: "bote_comun" as "bote_comun" | "adelanto_personal", concepto: "", importe: "", fecha: new Date().toISOString().slice(0, 10), beneficiario_id: "", fiesta_id: "" });
+  const [form, setForm] = useState({ tipo: "bote_comun" as "bote_comun" | "adelanto_personal", concepto: "", importe: "", fecha: new Date().toISOString().slice(0, 10), beneficiario_id: "", fiesta_id: fiestaId });
 
   const loadData = useCallback(async () => {
     if (!supabase || !pena) return;
@@ -58,7 +61,7 @@ export default function FinanzasPage() {
     if (error) { toast.error(error.message); return; }
     toast.success("Gasto registrado");
     setShowModal(false);
-    setForm({ tipo: "bote_comun", concepto: "", importe: "", fecha: new Date().toISOString().slice(0, 10), beneficiario_id: "", fiesta_id: "" });
+    setForm({ tipo: "bote_comun", concepto: "", importe: "", fecha: new Date().toISOString().slice(0, 10), beneficiario_id: "", fiesta_id: fiestaId });
     loadData();
   };
 
@@ -131,17 +134,17 @@ export default function FinanzasPage() {
         <div className="space-y-3">
           <div>
             <label className="block text-sm font-medium mb-1">Tipo</label>
-            <select value={form.tipo} onChange={e => setForm({ ...form, tipo: e.target.value as typeof form.tipo })} className="w-full px-3 py-2 border rounded-lg">
+            <select value={form.tipo} onChange={e => setForm({ ...form, tipo: e.target.value as typeof form.tipo })} className="w-full px-3 py-2 border rounded-[var(--radius-md)]">
               <option value="bote_comun">Gasto del bote común</option>
               <option value="adelanto_personal">Adelanto personal</option>
             </select>
           </div>
-          <div><label className="block text-sm font-medium mb-1">Concepto</label><input value={form.concepto} onChange={e => setForm({ ...form, concepto: e.target.value })} className="w-full px-3 py-2 border rounded-lg" required /></div>
-          <div><label className="block text-sm font-medium mb-1">Importe (€)</label><input type="number" step="0.01" value={form.importe} onChange={e => setForm({ ...form, importe: e.target.value })} className="w-full px-3 py-2 border rounded-lg" required /></div>
-          <div><label className="block text-sm font-medium mb-1">Fecha</label><input type="date" value={form.fecha} onChange={e => setForm({ ...form, fecha: e.target.value })} className="w-full px-3 py-2 border rounded-lg" /></div>
-          <div><label className="block text-sm font-medium mb-1">Fiesta (opcional)</label><select value={form.fiesta_id} onChange={e => setForm({ ...form, fiesta_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg"><option value="">Sin asignar</option>{fiestas.map(f => <option key={f.id} value={f.id}>{f.nombre}</option>)}</select></div>
+          <div><label className="block text-sm font-medium mb-1">Concepto</label><input value={form.concepto} onChange={e => setForm({ ...form, concepto: e.target.value })} className="w-full px-3 py-2 border rounded-[var(--radius-md)]" required /></div>
+          <div><label className="block text-sm font-medium mb-1">Importe (€)</label><input type="number" step="0.01" value={form.importe} onChange={e => setForm({ ...form, importe: e.target.value })} className="w-full px-3 py-2 border rounded-[var(--radius-md)]" required /></div>
+          <div><label className="block text-sm font-medium mb-1">Fecha</label><input type="date" value={form.fecha} onChange={e => setForm({ ...form, fecha: e.target.value })} className="w-full px-3 py-2 border rounded-[var(--radius-md)]" /></div>
+          <div><label className="block text-sm font-medium mb-1">Fiesta (opcional)</label><select value={form.fiesta_id} onChange={e => setForm({ ...form, fiesta_id: e.target.value })} className="w-full px-3 py-2 border rounded-[var(--radius-md)]"><option value="">Sin asignar</option>{fiestas.map(f => <option key={f.id} value={f.id}>{f.nombre}</option>)}</select></div>
           {form.tipo === "adelanto_personal" && (
-            <div><label className="block text-sm font-medium mb-1">Beneficiario</label><select value={form.beneficiario_id} onChange={e => setForm({ ...form, beneficiario_id: e.target.value })} className="w-full px-3 py-2 border rounded-lg"><option value="">Seleccionar (por defecto: tú)</option>{miembros.map(m => <option key={m.id} value={m.id}>{m.nombre_completo}</option>)}</select></div>
+            <div><label className="block text-sm font-medium mb-1">Beneficiario</label><select value={form.beneficiario_id} onChange={e => setForm({ ...form, beneficiario_id: e.target.value })} className="w-full px-3 py-2 border rounded-[var(--radius-md)]"><option value="">Seleccionar (por defecto: tú)</option>{miembros.map(m => <option key={m.id} value={m.id}>{m.nombre_completo}</option>)}</select></div>
           )}
           <Button onClick={handleSave} className="w-full">Registrar gasto</Button>
         </div>

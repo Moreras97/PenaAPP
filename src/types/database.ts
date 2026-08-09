@@ -1,8 +1,9 @@
 export type UserRole = "admin" | "mod" | "miembro";
 export type TipoAsistencia = "semana_completa" | "dias_sueltos";
-export type TipoBebida = "cerveza" | "tinto" | "refresco" | "agua" | "nada";
+export type TipoBebida = "cerveza" | "tinto" | "refresco" | "agua" | "nada" | "cubatas";
 export type TipoGasto = "bote_comun" | "adelanto_personal";
 export type TipoMensaje = "chat" | "sistema";
+export type TipoComida = "comida" | "cena";
 
 export interface Pena {
   id: string;
@@ -34,6 +35,8 @@ export interface Fiesta {
   fecha_inicio: string;
   fecha_fin: string;
   activa: boolean;
+  max_dias_sueltos: number | null;
+  locked: boolean;
   created_at: string;
 }
 
@@ -50,6 +53,9 @@ export interface Asistencia {
   fiesta_id: string;
   tipo: TipoAsistencia;
   bebida: TipoBebida;
+  tipo_alcohol: string | null;
+  marca_alcohol: string | null;
+  mezcla: string | null;
   created_at: string;
   updated_at: string;
   dias?: DiaFiesta[];
@@ -76,9 +82,18 @@ export interface PropuestaMenu {
   dia_fiesta_id: string;
   propuesto_por: string;
   menu: string;
+  tipo_comida: TipoComida;
+  hora: string | null;
   se_encarga: boolean;
   aprobado: boolean;
   aprobado_por: string | null;
+  created_at: string;
+}
+
+export interface PropuestaCocinero {
+  id: string;
+  propuesta_id: string;
+  user_pena_id: string;
   created_at: string;
 }
 
@@ -88,6 +103,10 @@ export interface ProductoCatalogo {
   nombre: string;
   categoria: string;
   precio_estimado: number;
+  precio_referencia: number | null;
+  precio_manual: number | null;
+  litros_por_unidad: number;
+  fuente_precio: string;
   unidad: string;
   created_at: string;
 }

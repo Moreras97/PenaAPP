@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import { PenaProvider } from "@/context/PenaContext";
 import { Toaster } from "sonner";
 
-const geist = Geist({ subsets: ["latin"] });
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "700", "800"],
+  variable: "--font-dm-sans",
+});
 
 export const metadata: Metadata = {
   title: "Peña App — Gestión de Fiestas",
@@ -14,7 +18,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body className={geist.className}>
+      <body className={dmSans.className}>
         <PenaProvider>
           {children}
           <Toaster richColors position="top-right" />

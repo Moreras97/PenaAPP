@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { usePena } from "@/context/PenaContext";
+import { useParams } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,14 +15,15 @@ import type { ProductoCatalogo, Fiesta, Asistencia } from "@/types/database";
 import { jsPDF } from "jspdf";
 
 export default function CalculadoraPage() {
-  const { pena, userPena } = usePena();
+  const { activePena: pena, activeUserPena: userPena } = usePena();
+  const params = useParams<{ id: string }>();
+  const fiestaCalc = params.id;
   const supabase = createClient();
   const [productos, setProductos] = useState<ProductoCatalogo[]>([]);
   const [showProductoModal, setShowProductoModal] = useState(false);
   const [editProducto, setEditProducto] = useState<ProductoCatalogo | null>(null);
   const [form, setForm] = useState({ nombre: "", categoria: "", precio_estimado: "", unidad: "ud" });
   const [fiestas, setFiestas] = useState<Fiesta[]>([]);
-  const [fiestaCalc, setFiestaCalc] = useState("");
   const [totalPersonas, setTotalPersonas] = useState(0);
   const [seleccionados, setSeleccionados] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -33,7 +35,6 @@ export default function CalculadoraPage() {
     setProductos(data as ProductoCatalogo[] || []);
     const { data: f } = await supabase.from("fiestas").select("*").eq("pena_id", pena.id).order("fecha_inicio");
     setFiestas(f || []);
-    if (f?.length) setFiestaCalc(f[0].id);
     setLoading(false);
   }, [supabase, pena]);
 
@@ -135,10 +136,10 @@ export default function CalculadoraPage() {
                     <input type="number" min="0" value={seleccionados[p.id] || 0}
                       onChange={e => setSeleccionados(prev => ({ ...prev, [p.id]: parseInt(e.target.value) || 0 }))}
                       className="w-16 px-2 py-1 border rounded text-sm text-center" />
-                    {isAdmin && <button onClick={() => handleDeleteProducto(p.id)} className="ml-2 p-1 hover:bg-gray-100 rounded"><Trash2 className="w-3.5 h-3.5 text-red-400" /></button>}
+                    {isAdmin && <button onClick={() => handleDeleteProducto(p.id)} className="ml-2 p-1 hover:bg-[var(--bg-page)] rounded"><Trash2 className="w-3.5 h-3.5 text-red-400" /></button>}
                   </div>
                 ))}
-                {productos.length === 0 && <p className="text-center text-gray-500 py-4">Sin productos. El admin debe añadirlos.</p>}
+                {productos.length === 0 && <p className="text-center text-[var(--text-secondary)] py-4">Sin productos. El admin debe añadirlos.</p>}
               </div>
             </CardContent>
           </Card>
@@ -148,12 +149,6 @@ export default function CalculadoraPage() {
           <Card>
             <CardContent className="pt-4">
               <h2 className="text-lg font-semibold mb-4">Presupuesto</h2>
-              <div className="mb-3">
-                <label className="block text-sm font-medium mb-1">Fiesta</label>
-                <select value={fiestaCalc} onChange={e => setFiestaCalc(e.target.value)} className="w-full px-3 py-2 border rounded-lg">
-                  {fiestas.map(f => <option key={f.id} value={f.id}>{f.nombre}</option>)}
-                </select>
-              </div>
               <p className="text-sm mb-4">Asistentes registrados: <strong>{totalPersonas}</strong></p>
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-sm"><span>Subtotal productos</span><span>{subtotal.toFixed(2)}€</span></div>
@@ -172,11 +167,11 @@ export default function CalculadoraPage() {
 
       <Modal open={showProductoModal} onClose={() => setShowProductoModal(false)} title={editProducto ? "Editar producto" : "Nuevo producto"}>
         <div className="space-y-3">
-          <div><label className="block text-sm font-medium mb-1">Nombre</label><input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="w-full px-3 py-2 border rounded-lg" required /></div>
-          <div><label className="block text-sm font-medium mb-1">Categoría</label><input value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })} className="w-full px-3 py-2 border rounded-lg" placeholder="Ej: Bebida, Comida, Varios" /></div>
+          <div><label className="block text-sm font-medium mb-1">Nombre</label><input value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} className="w-full px-3 py-2 border rounded-[var(--radius-md)]" required /></div>
+          <div><label className="block text-sm font-medium mb-1">Categoría</label><input value={form.categoria} onChange={e => setForm({ ...form, categoria: e.target.value })} className="w-full px-3 py-2 border rounded-[var(--radius-md)]" placeholder="Ej: Bebida, Comida, Varios" /></div>
           <div className="grid grid-cols-2 gap-2">
-            <div><label className="block text-sm font-medium mb-1">Precio (€)</label><input type="number" step="0.01" value={form.precio_estimado} onChange={e => setForm({ ...form, precio_estimado: e.target.value })} className="w-full px-3 py-2 border rounded-lg" required /></div>
-            <div><label className="block text-sm font-medium mb-1">Unidad</label><select value={form.unidad} onChange={e => setForm({ ...form, unidad: e.target.value })} className="w-full px-3 py-2 border rounded-lg"><option value="ud">ud</option><option value="kg">kg</option><option value="L">L</option><option value="pack">pack</option><option value="botella">botella</option></select></div>
+            <div><label className="block text-sm font-medium mb-1">Precio (€)</label><input type="number" step="0.01" value={form.precio_estimado} onChange={e => setForm({ ...form, precio_estimado: e.target.value })} className="w-full px-3 py-2 border rounded-[var(--radius-md)]" required /></div>
+            <div><label className="block text-sm font-medium mb-1">Unidad</label><select value={form.unidad} onChange={e => setForm({ ...form, unidad: e.target.value })} className="w-full px-3 py-2 border rounded-[var(--radius-md)]"><option value="ud">ud</option><option value="kg">kg</option><option value="L">L</option><option value="pack">pack</option><option value="botella">botella</option></select></div>
           </div>
           <Button onClick={handleSaveProducto} className="w-full">{editProducto ? "Actualizar" : "Añadir"} producto</Button>
         </div>

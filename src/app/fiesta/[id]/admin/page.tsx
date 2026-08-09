@@ -1,0 +1,335 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { usePena } from "@/context/PenaContext";
+import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Modal } from "@/components/ui/modal";
+import { toast } from "sonner";
+import { Plus, Trash2, Edit, Upload, Check, X, Crown, Shield, User, UserPlus } from "lucide-react";
+import { adminDeleteFiesta, adminSaveFiesta, adminAddDia, adminChangeRole, adminToggleApproval, adminApproveOrReject, adminUploadEscudo, adminSaveTheme } from "./actions";
+import type { Fiesta, UserPena } from "@/types/database";
+
+interface PendingMember {
+  id: string; pena_id: string; user_id: string;
+  nombre_completo: string; apodo: string | null; created_at: string;
+}
+
+export default function AdminPage() {
+  const { activePena: pena, activeUserPena: userPena, refresh } = usePena();
+  const supabase = createClient();
+  const [tab, setTab] = useState<"fiestas" | "miembros" | "aprobaciones" | "theming">("fiestas");
+  const [fiestas, setFiestas] = useState<Fiesta[]>([]);
+  const [miembros, setMiembros] = useState<UserPena[]>([]);
+  const [pendingMembers, setPendingMembers] = useState<PendingMember[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [requiresApproval, setRequiresApproval] = useState(false);
+  const isAdmin = userPena?.rol === "admin";
+
+  const [showFiestaModal, setShowFiestaModal] = useState(false);
+  const [editFiesta, setEditFiesta] = useState<Fiesta | null>(null);
+  const [fiestaForm, setFiestaForm] = useState({ nombre: "", fecha_inicio: "", fecha_fin: "", max_dias_sueltos: null as number|null, locked: false });
+  const [showDiaModal, setShowDiaModal] = useState(false);
+  const [diaFiestaId, setDiaFiestaId] = useState("");
+  const [diaForm, setDiaForm] = useState({ fecha: "", nombre: "" });
+  const [themeForm, setThemeForm] = useState({ color_primary: "#E8635A", color_secondary: "#7B6CF6" });
+  const [escudoFile, setEscudoFile] = useState<File | null>(null);
+  const [escudoPreview, setEscudoPreview] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteFiestaId, setDeleteFiestaId] = useState("");
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+
+  const loadData = useCallback(async () => {
+    if (!supabase || !pena) return;
+    const [{ data: f }, { data: m }, { data: p }] = await Promise.all([
+      supabase.from("fiestas").select("*").eq("pena_id", pena.id).order("fecha_inicio"),
+      supabase.from("users_penas").select("*").eq("pena_id", pena.id),
+      isAdmin ? supabase.from("pending_members").select("*").eq("pena_id", pena.id).order("created_at") : Promise.resolve({ data: [] }),
+    ]);
+    setFiestas(f || []);
+    setMiembros((m as UserPena[]) || []);
+    setPendingMembers((p as PendingMember[]) || []);
+    if (pena) {
+      setRequiresApproval(!!(pena as any).requires_approval);
+      setThemeForm({ color_primary: pena.color_primary, color_secondary: pena.color_secondary });
+      setEscudoPreview(pena.escudo_url);
+    }
+    setLoading(false);
+  }, [supabase, pena, isAdmin]);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  if (!isAdmin && userPena) return <div className="p-8 text-center">Acceso restringido. Solo administradores.</div>;
+
+  const handleSaveFiesta = async () => {
+    if (!pena) return;
+    const payload = { ...fiestaForm, pena_id: pena.id, max_dias_sueltos: fiestaForm.max_dias_sueltos ?? null, locked: fiestaForm.locked || false };
+    const r = await adminSaveFiesta(editFiesta?.id || null, payload);
+    if (r.error) { toast.error(r.error); return; }
+    toast.success(editFiesta ? "Fiesta actualizada" : "Fiesta creada");
+    setShowFiestaModal(false); setEditFiesta(null); setFiestaForm({ nombre: "", fecha_inicio: "", fecha_fin: "", max_dias_sueltos: null, locked: false });
+    loadData();
+  };
+
+  const handleDeleteFiestaRequest = (id: string) => {
+    setDeleteFiestaId(id);
+    setDeleteConfirmText("");
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteFiestaConfirm = async () => {
+    if (deleteConfirmText !== "Eliminar fiesta") return;
+    const r = await adminDeleteFiesta(deleteFiestaId);
+    if (r.error) { toast.error(r.error); return; }
+    toast.success("Fiesta eliminada");
+    setShowDeleteModal(false);
+    loadData();
+  };
+
+  const handleAddDia = async () => {
+    if (!diaFiestaId) return;
+    const r = await adminAddDia(diaFiestaId, diaForm.fecha, diaForm.nombre || null);
+    if (r.error) { toast.error(r.error); return; }
+    toast.success("Día añadido"); setShowDiaModal(false); setDiaForm({ fecha: "", nombre: "" });
+  };
+
+  const handleChangeRole = async (miembroId: string, rol: string) => {
+    const r = await adminChangeRole(miembroId, rol);
+    if (r.error) { toast.error(r.error); return; }
+    toast.success(rol === "admin" ? "Nuevo administrador" : "Rol actualizado");
+    loadData();
+  };
+
+  const handleToggleApproval = async () => {
+    if (!pena) return;
+    const nuevo = !requiresApproval;
+    const r = await adminToggleApproval(pena.id, nuevo);
+    if (r.error) { toast.error(r.error); return; }
+    setRequiresApproval(nuevo);
+    toast.success(nuevo ? "Ahora se requiere aprobación" : "Acceso libre");
+  };
+
+  const handleApproveMember = async (pending: PendingMember) => {
+    const r = await adminApproveOrReject(pending.id, true);
+    if (r.error) { toast.error(r.error); return; }
+    toast.success(pending.nombre_completo + " aprobado");
+    loadData();
+  };
+
+  const handleRejectMember = async (pending: PendingMember) => {
+    const r = await adminApproveOrReject(pending.id, false);
+    if (r.error) { toast.error(r.error); return; }
+    toast.success(pending.nombre_completo + " rechazado");
+    loadData();
+  };
+
+  const handleUploadEscudo = async () => {
+    if (!pena || !escudoFile) return;
+    const reader = new FileReader();
+    const b64 = await new Promise<string>((res) => { reader.onload = () => res((reader.result as string).split(",")[1]); reader.readAsDataURL(escudoFile); });
+    const r = await adminUploadEscudo(pena.id, b64, escudoFile.name);
+    if (r.error) { toast.error(r.error); return; }
+    toast.success("Escudo actualizado"); refresh();
+  };
+
+  const handleSaveTheme = async () => {
+    if (!pena) return;
+    const r = await adminSaveTheme(pena.id, themeForm.color_primary, themeForm.color_secondary);
+    if (r.error) { toast.error(r.error); return; }
+    toast.success("Colores actualizados"); refresh();
+  };
+
+  if (loading) return <div className="p-8 text-center">Cargando...</div>;
+
+  const tabs = [
+    { key: "fiestas" as const, label: "Fiestas" },
+    { key: "miembros" as const, label: "Miembros" },
+    ...(isAdmin ? [{ key: "aprobaciones" as const, label: "Aprobaciones" + (pendingMembers.length > 0 ? " (" + pendingMembers.length + ")" : "") }] : []),
+    { key: "theming" as const, label: "Tematización" },
+  ];
+
+  return (
+    <div>
+      <PageHeader title="Administración" description="Gestiona tu peña" />
+      <div className="flex gap-2 mb-6 flex-wrap">
+        {tabs.map(t => (
+          <button key={t.key} onClick={() => setTab(t.key)}
+            className={"px-4 py-2 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down transition " + (tab === t.key ? "bg-[var(--color-primary)] text-white" : "bg-[var(--bg-page)]")}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {isAdmin && (
+        <div className="bg-[var(--bg-surface)] border-brutalist shadow-brutalist rounded-[var(--radius-lg)] p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-bold">Nuevos miembros</p>
+              <p className="text-sm">{requiresApproval ? "Requieren aprobación del admin" : "Entrada libre con el identificador"}</p>
+            </div>
+            <button onClick={handleToggleApproval}
+              className={"px-4 py-2 text-sm font-bold border-brutalist shadow-brutalist-sm rounded-[var(--radius-md)] press-down transition " + (requiresApproval ? "bg-[var(--color-yellow)]" : "bg-[var(--color-teal)]")}>
+              {requiresApproval ? "Con aprobación" : "Acceso libre"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {tab === "fiestas" && (
+        <div>
+          <div className="flex justify-between mb-4">
+            <h2 className="text-lg font-bold">Fiestas</h2>
+            <Button size="sm" onClick={() => { setEditFiesta(null); setFiestaForm({ nombre: "", fecha_inicio: "", fecha_fin: "", max_dias_sueltos: null, locked: false }); setShowFiestaModal(true); }}><Plus className="w-3.5 h-3.5 mr-1" /> Nueva fiesta</Button>
+          </div>
+          {fiestas.map(f => (
+            <Card key={f.id} className={"mb-3 " + (new Date(f.fecha_fin) < new Date() ? "opacity-60" : "")}>
+              <CardContent className="pt-4 flex items-center justify-between">
+                <div><p className="font-bold">{f.nombre} {(f as any).locked && <Badge variant="danger">Cerrada</Badge>} {new Date(f.fecha_fin) < new Date() && <Badge variant="default">Finalizada</Badge>}</p><p className="text-sm">{f.fecha_inicio} a {f.fecha_fin} {f.activa && <Badge variant="success">Activa</Badge>}</p></div>
+                <div className="flex gap-1">
+                  <Button size="sm" variant="outline" onClick={() => { setDiaFiestaId(f.id); setShowDiaModal(true); }}><Plus className="w-3.5 h-3.5" /> Día</Button>
+                  <Button size="sm" variant="outline" onClick={() => { setEditFiesta(f); setFiestaForm({ nombre: f.nombre, fecha_inicio: f.fecha_inicio, fecha_fin: f.fecha_fin, max_dias_sueltos: (f as any).max_dias_sueltos ?? null, locked: !!(f as any).locked }); setShowFiestaModal(true); }}><Edit className="w-3.5 h-3.5" /></Button>
+                  <Button size="sm" variant="ghost" onClick={() => handleDeleteFiestaRequest(f.id)}><Trash2 className="w-3.5 h-3.5 text-red-400" /></Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {tab === "miembros" && (
+        <div>
+          <h2 className="text-lg font-bold mb-4">Miembros</h2>
+          {miembros.map(m => (
+            <Card key={m.id} className="mb-3">
+              <CardContent className="pt-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full border-2 border-[var(--border-color)] shadow-brutalist-sm flex items-center justify-center bg-[var(--bg-page)]">
+                    {m.rol === "admin" ? <Crown className="w-5 h-5 text-[var(--color-yellow)]" /> : m.rol === "mod" ? <Shield className="w-5 h-5 text-[var(--color-secondary)]" /> : <User className="w-5 h-5" />}
+                  </div>
+                  <div><p className="font-bold">{m.nombre_completo} {m.apodo && <span className="text-sm">({m.apodo})</span>}</p><p className="text-xs capitalize">{m.rol}</p></div>
+                </div>
+                {isAdmin && (
+                  <div className="flex gap-1">
+                    {m.rol === "miembro" && <Button size="sm" variant="outline" onClick={() => handleChangeRole(m.id, "mod")}>Hacer mod</Button>}
+                    {m.rol === "mod" && <Button size="sm" variant="outline" onClick={() => handleChangeRole(m.id, "miembro")}>Quitar mod</Button>}
+                    {m.rol !== "admin" && <Button size="sm" variant="secondary" onClick={() => handleChangeRole(m.id, "admin")}><Crown className="w-3.5 h-3.5 mr-1" /> Admin</Button>}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {tab === "aprobaciones" && (
+        <div>
+          <h2 className="text-lg font-bold mb-4">Solicitudes pendientes</h2>
+          {pendingMembers.length === 0 ? (
+            <p className="text-center py-8">No hay solicitudes pendientes</p>
+          ) : (
+            pendingMembers.map(p => (
+              <Card key={p.id} className="mb-3">
+                <CardContent className="pt-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full border-2 border-[var(--border-color)] shadow-brutalist-sm flex items-center justify-center bg-[var(--bg-page)]">
+                      <UserPlus className="w-5 h-5 text-[var(--color-secondary)]" />
+                    </div>
+                    <div><p className="font-bold">{p.nombre_completo} {p.apodo && <span className="text-sm">({p.apodo})</span>}</p></div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button size="sm" variant="teal" onClick={() => handleApproveMember(p)}><Check className="w-3.5 h-3.5 mr-1" /> Aprobar</Button>
+                    <Button size="sm" variant="danger" onClick={() => handleRejectMember(p)}><X className="w-3.5 h-3.5" /></Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
+
+      {tab === "theming" && (
+        <div className="max-w-md">
+          <Card className="mb-4">
+            <CardContent className="pt-4">
+              <h2 className="text-lg font-bold mb-4">Escudo / Logo</h2>
+              {escudoPreview && <img src={escudoPreview} alt="Escudo" className="w-24 h-24 rounded-full border-2 border-[var(--border-color)] object-cover mb-4" />}
+              <div className="flex gap-2"><input type="file" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) { setEscudoFile(f); setEscudoPreview(URL.createObjectURL(f)); } }} className="text-sm" /><Button size="sm" onClick={handleUploadEscudo} disabled={!escudoFile}><Upload className="w-3.5 h-3.5 mr-1" /> Subir</Button></div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="pt-4">
+              <h2 className="text-lg font-bold mb-4">Colores</h2>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3"><label className="text-sm font-bold w-32">Color primario</label><input type="color" value={themeForm.color_primary} onChange={e => setThemeForm({ ...themeForm, color_primary: e.target.value })} className="w-12 h-8 border-2 border-[var(--border-color)] rounded cursor-pointer" /><input type="text" value={themeForm.color_primary} onChange={e => setThemeForm({ ...themeForm, color_primary: e.target.value })} className="flex-1 border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-2 py-1 text-sm" /></div>
+                <div className="flex items-center gap-3"><label className="text-sm font-bold w-32">Color secundario</label><input type="color" value={themeForm.color_secondary} onChange={e => setThemeForm({ ...themeForm, color_secondary: e.target.value })} className="w-12 h-8 border-2 border-[var(--border-color)] rounded cursor-pointer" /><input type="text" value={themeForm.color_secondary} onChange={e => setThemeForm({ ...themeForm, color_secondary: e.target.value })} className="flex-1 border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-2 py-1 text-sm" /></div>
+                <div className="flex gap-2 mt-2"><div className="w-12 h-12 rounded-[var(--radius-md)] border-brutalist" style={{ backgroundColor: themeForm.color_primary }} /><div className="w-12 h-12 rounded-[var(--radius-md)] border-brutalist" style={{ backgroundColor: themeForm.color_secondary }} /></div>
+                <Button onClick={handleSaveTheme} className="w-full">Guardar colores</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <Modal open={showFiestaModal} onClose={() => setShowFiestaModal(false)} title={editFiesta ? "Editar fiesta" : "Nueva fiesta"}>
+        <div className="space-y-3">
+          <div><label className="block text-sm font-bold mb-1">Nombre</label><input value={fiestaForm.nombre} onChange={e => setFiestaForm({ ...fiestaForm, nombre: e.target.value })} className="w-full border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-3 py-2 font-medium" placeholder="Fiestas de Mayo 2026" required /></div>
+          <div className="grid grid-cols-2 gap-2">
+            <div><label className="block text-sm font-bold mb-1">Fecha inicio</label><input type="date" value={fiestaForm.fecha_inicio} onChange={e => setFiestaForm({ ...fiestaForm, fecha_inicio: e.target.value })} className="w-full border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-3 py-2" required /></div>
+            <div><label className="block text-sm font-bold mb-1">Fecha fin</label><input type="date" value={fiestaForm.fecha_fin} onChange={e => setFiestaForm({ ...fiestaForm, fecha_fin: e.target.value })} className="w-full border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-3 py-2" required /></div>
+          </div>
+          <div>
+            <label className="block text-sm font-bold mb-1">Dias sueltos maximos</label>
+            {(() => {
+              const inicio = new Date(fiestaForm.fecha_inicio);
+              const fin = new Date(fiestaForm.fecha_fin);
+              const diff = fiestaForm.fecha_inicio && fiestaForm.fecha_fin && fin >= inicio
+                ? Math.floor((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)) + 1
+                : 0;
+              return (
+            <select value={fiestaForm.max_dias_sueltos ?? 0} onChange={e => setFiestaForm({ ...fiestaForm, max_dias_sueltos: parseInt(e.target.value) })}>
+              <option value="0">Solo semana completa</option>
+              {diff > 0 && Array.from({ length: diff }, (_, i) => i + 1).map(n => (
+                <option key={n} value={n}>{n} {n === 1 ? "día suelto" : "días sueltos"}</option>
+              ))}
+              <option value="999">Sin limite</option>
+            </select>
+              );
+            })()}
+          </div>
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-bold">Cerrada (solo consulta)</label>
+            <button type="button" onClick={() => setFiestaForm({ ...fiestaForm, locked: !fiestaForm.locked })}
+              className={"px-3 py-1 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + (fiestaForm.locked ? "bg-[var(--color-yellow)]" : "bg-[var(--bg-page)]")}>
+              {fiestaForm.locked ? "Cerrada" : "Abierta"}
+            </button>
+          </div>
+
+          <Button onClick={handleSaveFiesta} className="w-full">{editFiesta ? "Actualizar" : "Crear"} fiesta</Button>
+        </div>
+      </Modal>
+
+      <Modal open={showDiaModal} onClose={() => setShowDiaModal(false)} title="Añadir día">
+        <div className="space-y-3">
+          <div><label className="block text-sm font-bold mb-1">Fecha</label><input type="date" value={diaForm.fecha} onChange={e => setDiaForm({ ...diaForm, fecha: e.target.value })} className="w-full border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-3 py-2" required /></div>
+          <div><label className="block text-sm font-bold mb-1">Nombre (opcional)</label><input value={diaForm.nombre} onChange={e => setDiaForm({ ...diaForm, nombre: e.target.value })} className="w-full border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-3 py-2" placeholder="Viernes - Parrillada" /></div>
+          <Button onClick={handleAddDia} className="w-full">Añadir día</Button>
+        </div>
+      </Modal>
+
+      <Modal open={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Eliminar fiesta">
+        <div className="space-y-4">
+          <p className="text-sm font-bold">Accion permanente. Escribe <span className="text-[var(--color-primary)] font-extrabold">Eliminar fiesta</span>:</p>
+          <input type="text" value={deleteConfirmText} onChange={e => setDeleteConfirmText(e.target.value)}
+            className="w-full border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-3 py-2 font-medium"
+            placeholder="Eliminar fiesta" />
+          <Button variant="danger" className="w-full" disabled={deleteConfirmText !== "Eliminar fiesta"} onClick={handleDeleteFiestaConfirm}>
+            Eliminar fiesta permanentemente
+          </Button>
+        </div>
+      </Modal>
+    </div>
+  );
+}

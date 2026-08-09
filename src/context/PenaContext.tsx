@@ -4,49 +4,91 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Pena, UserPena } from "@/types/database";
 import { createClient } from "@/lib/supabase/client";
 
+export interface PenaMembership {
+  pena: Pena;
+  userPena: UserPena;
+}
+
 interface PenaContextType {
-  pena: Pena | null;
-  userPena: UserPena | null;
+  activeMembership: PenaMembership | null;
+  memberships: PenaMembership[];
+  activePena: Pena | null;
+  activeUserPena: UserPena | null;
   loading: boolean;
   refresh: () => void;
+  switchPena: (penaId: string) => void;
 }
 
 const PenaContext = createContext<PenaContextType>({
-  pena: null,
-  userPena: null,
+  activeMembership: null,
+  memberships: [],
+  activePena: null,
+  activeUserPena: null,
   loading: true,
   refresh: () => {},
+  switchPena: () => {},
 });
 
 export function PenaProvider({ children }: { children: ReactNode }) {
-  const [pena, setPena] = useState<Pena | null>(null);
-  const [userPena, setUserPena] = useState<UserPena | null>(null);
+  const [memberships, setMemberships] = useState<PenaMembership[]>([]);
+  const [activePenaId, setActivePenaId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const loadPena = async () => {
+  const loadPenas = async () => {
     const supabase = createClient();
     if (!supabase) { setLoading(false); return; }
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setLoading(false); return; }
+    if (!user) { setMemberships([]); setActivePenaId(null); setLoading(false); return; }
 
-    const { data: up } = await supabase
+    const { data } = await supabase
       .from("users_penas")
       .select("*, penas(*)")
-      .eq("user_id", user.id)
-      .single();
+      .eq("user_id", user.id);
 
-    if (up) {
-      setUserPena(up as unknown as UserPena);
-      setPena((up as unknown as { penas: Pena }).penas || null);
+    if (data && data.length > 0) {
+      const list: PenaMembership[] = data.map((row: any) => ({
+        pena: row.penas as Pena,
+        userPena: {
+          id: row.id,
+          user_id: row.user_id,
+          pena_id: row.pena_id,
+          nombre_completo: row.nombre_completo,
+          apodo: row.apodo,
+          rol: row.rol,
+          cuota_pagada: row.cuota_pagada,
+          created_at: row.created_at,
+        },
+      }));
+      setMemberships(list);
+      if (!activePenaId) setActivePenaId(list[0].pena.id);
+    } else {
+      setMemberships([]);
+      setActivePenaId(null);
     }
     setLoading(false);
   };
 
-  useEffect(() => { loadPena(); }, []);
+  useEffect(() => { loadPenas(); }, []);
+
+  const switchPena = (penaId: string) => setActivePenaId(penaId);
+
+  const activeMembership = activePenaId
+    ? memberships.find((m) => m.pena.id === activePenaId) || null
+    : null;
 
   return (
-    <PenaContext.Provider value={{ pena, userPena, loading, refresh: loadPena }}>
+    <PenaContext.Provider
+      value={{
+        activeMembership,
+        memberships,
+        activePena: activeMembership?.pena || null,
+        activeUserPena: activeMembership?.userPena || null,
+        loading,
+        refresh: loadPenas,
+        switchPena,
+      }}
+    >
       {children}
     </PenaContext.Provider>
   );

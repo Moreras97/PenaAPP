@@ -1,12 +1,128 @@
 @import "tailwindcss";
 
 :root {
-  --color-primary: #6366F1;
-  --color-secondary: #F59E0B;
+  --bg-page: #FAFADF;
+  --bg-surface: #FFFFFF;
+  --bg-dark: #111111;
+  --color-primary: #E8635A;
+  --color-secondary: #7B6CF6;
+  --color-teal: #4ECDC4;
+  --color-yellow: #FFE566;
+  --color-pink: #F9A8B8;
+  --color-lavender: #C4B5FD;
+  --border-color: #111111;
+  --border-width: 2px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+  --shadow-sm: 3px 3px 0px 0px #111111;
+  --shadow-md: 4px 4px 0px 0px #111111;
+  --shadow-lg: 6px 6px 0px 0px #111111;
+  --shadow-sm-hover: 1px 1px 0px 0px #111111;
+  --shadow-md-hover: 2px 2px 0px 0px #111111;
+  --font: 'DM Sans', sans-serif;
+  --text-primary: #111111;
+  --text-secondary: #555555;
+  --text-on-dark: #FFFFFF;
+  --text-on-accent: #FFFFFF;
+}
+
+@theme inline {
+  --color-primary: var(--color-primary);
+  --color-secondary: var(--color-secondary);
+  --color-teal: var(--color-teal);
+  --color-yellow: var(--color-yellow);
+  --color-pink: var(--color-pink);
+  --color-lavender: var(--color-lavender);
+  --color-bg-page: var(--bg-page);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-dark: var(--bg-dark);
+  --color-border-color: var(--border-color);
 }
 
 @layer base {
   body {
-    @apply text-gray-900 antialiased;
+    @apply text-[var(--text-primary)] antialiased;
+    background-color: var(--bg-page);
+    font-family: var(--font);
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font);
+    text-transform: lowercase;
+  }
+
+  h1 { font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 800; }
+  h2 { font-size: clamp(1.75rem, 4vw, 2.75rem); font-weight: 700; }
+  h3 { font-size: 1.2rem; font-weight: 700; }
+
+  p {
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: var(--text-secondary);
+  }
+}
+
+@layer components {
+  select, input[type="text"], input[type="date"], textarea {
+    background-color: var(--bg-surface);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    font-family: var(--font);
+    font-weight: 500;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.15s;
+  }
+  select:focus, input[type="text"]:focus, input[type="date"]:focus, textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-md);
+    transform: translate(-1px, -1px);
+  }
+  .border-brutalist {
+    border: var(--border-width) solid var(--border-color);
+  }
+
+  .shadow-brutalist {
+    box-shadow: var(--shadow-md);
+  }
+
+  .shadow-brutalist-sm {
+    box-shadow: var(--shadow-sm);
+  }
+
+  .shadow-brutalist-lg {
+    box-shadow: var(--shadow-lg);
+  }
+
+  .press-down {
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+
+  .press-down:hover {
+    transform: translate(2px, 2px);
+    box-shadow: var(--shadow-md-hover);
+  }
+
+  .press-down:active {
+    transform: translate(4px, 4px);
+    box-shadow: none;
+  }
+
+  .deco {
+    position: absolute;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .deco-spin {
+    animation: spin-slow 20s linear infinite;
   }
 }
