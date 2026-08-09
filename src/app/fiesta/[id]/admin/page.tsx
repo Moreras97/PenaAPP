@@ -256,7 +256,7 @@ export default function AdminPage() {
             <CardContent className="pt-4">
               <h2 className="text-lg font-bold mb-4">Escudo / Logo</h2>
               {escudoPreview && <img src={escudoPreview} alt="Escudo" className="w-24 h-24 rounded-full border-2 border-[var(--border-color)] object-cover mb-4" />}
-              <div className="flex gap-2"><input type="file" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) { setEscudoFile(f); setEscudoPreview(URL.createObjectURL(f)); } }} className="text-sm" /><Button size="sm" onClick={handleUploadEscudo} disabled={!escudoFile}><Upload className="w-3.5 h-3.5 mr-1" /> Subir</Button></div>
+              <div className="flex flex-col sm:flex-row gap-2"><input type="file" accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) { setEscudoFile(f); setEscudoPreview(URL.createObjectURL(f)); } }} className="text-sm w-full sm:w-auto" /><Button size="sm" onClick={handleUploadEscudo} disabled={!escudoFile} className="w-full sm:w-auto"><Upload className="w-3.5 h-3.5 mr-1" /> Subir</Button></div>
             </CardContent>
           </Card>
           <Card>
@@ -266,6 +266,32 @@ export default function AdminPage() {
                 <div className="flex items-center gap-3"><label className="text-sm font-bold w-32">Color primario</label><input type="color" value={themeForm.color_primary} onChange={e => setThemeForm({ ...themeForm, color_primary: e.target.value })} className="w-12 h-8 border-2 border-[var(--border-color)] rounded cursor-pointer" /><input type="text" value={themeForm.color_primary} onChange={e => setThemeForm({ ...themeForm, color_primary: e.target.value })} className="flex-1 border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-2 py-1 text-sm" /></div>
                 <div className="flex items-center gap-3"><label className="text-sm font-bold w-32">Color secundario</label><input type="color" value={themeForm.color_secondary} onChange={e => setThemeForm({ ...themeForm, color_secondary: e.target.value })} className="w-12 h-8 border-2 border-[var(--border-color)] rounded cursor-pointer" /><input type="text" value={themeForm.color_secondary} onChange={e => setThemeForm({ ...themeForm, color_secondary: e.target.value })} className="flex-1 border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-2 py-1 text-sm" /></div>
                 <div className="flex gap-2 mt-2"><div className="w-12 h-12 rounded-[var(--radius-md)] border-brutalist" style={{ backgroundColor: themeForm.color_primary }} /><div className="w-12 h-12 rounded-[var(--radius-md)] border-brutalist" style={{ backgroundColor: themeForm.color_secondary }} /></div>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  <span className="text-xs font-bold opacity-50">presets:</span>
+                  {[
+                    ["#E8635A","#7B6CF6"],["#4ECDC4","#FFE566"],["#6366F1","#F59E0B"],
+                    ["#EC4899","#8B5CF6"],["#10B981","#3B82F6"],["#F97316","#06B6D4"]
+                  ].map(([p,s]) => (
+                    <button key={p} onClick={() => setThemeForm({ color_primary: p, color_secondary: s })}
+                      className="w-7 h-7 rounded-full border-2 border-[var(--border-color)] press-down overflow-hidden"
+                      title={p + " / " + s}>
+                      <span className="block w-1/2 h-full float-left" style={{backgroundColor:p}}></span>
+                      <span className="block w-1/2 h-full float-left" style={{backgroundColor:s}}></span>
+                    </button>
+                  ))}
+                </div>
+                {(() => {
+                  const isBad = (c1: string, c2: string) => {
+                    const hex = (h: string) => parseInt(h.replace("#",""),16);
+                    const lum = (h: string) => {
+                      const x = hex(h); return (0.299*((x>>16)&0xff) + 0.587*((x>>8)&0xff) + 0.114*(x&0xff))/255;
+                    };
+                    return Math.abs(lum(c1)-lum(c2)) < 0.3;
+                  };
+                  return isBad(themeForm.color_primary, themeForm.color_secondary) ? (
+                    <p className="text-xs text-[var(--color-primary)] font-bold mb-2">Cuidado: los colores son muy parecidos y pueden ser dificiles de leer.</p>
+                  ) : null;
+                })()}
                 <Button onClick={handleSaveTheme} className="w-full">Guardar colores</Button>
               </div>
             </CardContent>

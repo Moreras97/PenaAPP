@@ -8,6 +8,7 @@ import { Clock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { useState, useRef, useEffect } from "react";
+import { toast } from "sonner";
 
 const navItems = [
   { href: "asistencia", icon: Calendar, label: "Asistencia" },
@@ -120,7 +121,7 @@ export default function FiestaLayout({ children }: { children: React.ReactNode }
                 </span>
                 <span className="text-[10px] text-[var(--text-secondary)] hidden sm:flex items-center gap-1 lowercase">
                   ID: {activePena.slug}
-                  <button onClick={() => { navigator.clipboard.writeText(activePena.slug); setSlugCopied(true); setTimeout(() => setSlugCopied(false), 2000); }}
+                  <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); navigator.clipboard.writeText(activePena.slug); setSlugCopied(true); toast.success("ID copiado al portapapeles"); setTimeout(() => setSlugCopied(false), 2000); }}
                     className="inline-flex items-center hover:text-[var(--color-primary)] transition">
                     {slugCopied ? <Check className="w-3 h-3 text-[var(--color-teal)]" /> : <Copy className="w-3 h-3" />}
                   </button>
