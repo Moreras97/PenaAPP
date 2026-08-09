@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/";
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://192.168.1.23";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   try {
     if (code) {
@@ -28,12 +28,12 @@ export async function GET(request: Request) {
       const { error } = await supabase.auth.exchangeCodeForSession(code);
       if (error) {
         console.error("exchangeCodeForSession error:", error.message);
-        return NextResponse.redirect(`http://192.168.1.23/auth?error=${encodeURIComponent(error.message)}`);
+        return NextResponse.redirect(`${siteUrl}/auth?error=${encodeURIComponent(error.message)}`);
       }
     }
   } catch (err: any) {
     console.error("Callback error:", err?.message || err);
-    return NextResponse.redirect(`http://192.168.1.23/auth?error=${encodeURIComponent(err?.message || "unknown")}`);
+    return NextResponse.redirect(`${siteUrl}/auth?error=${encodeURIComponent(err?.message || "unknown")}`);
   }
 
   return NextResponse.redirect(`${siteUrl}${next}`);
