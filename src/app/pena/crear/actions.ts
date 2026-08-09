@@ -5,7 +5,7 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 
-export async function crearPena(nombre: string, slug: string) {
+export async function crearPena(nombre: string, slug: string, provincia: string, poblacion: string) {
   const cookieStore = await cookies();
 
   const supabase = createServerClient(
@@ -34,7 +34,7 @@ export async function crearPena(nombre: string, slug: string) {
 
   const { data: pena, error } = await admin
     .from("penas")
-    .insert({ nombre, slug, created_by: user.id })
+    .insert({ nombre, slug, provincia: provincia || null, poblacion: poblacion || null, created_by: user.id })
     .select()
     .single();
 

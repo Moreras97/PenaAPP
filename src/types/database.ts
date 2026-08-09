@@ -15,6 +15,8 @@ export interface Pena {
   created_by: string;
   created_at: string;
   updated_at: string;
+  provincia: string | null;
+  poblacion: string | null;
 }
 
 export interface UserPena {
