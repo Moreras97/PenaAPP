@@ -79,6 +79,9 @@ export default function AdminPage() {
     const payload = { ...fiestaForm, pena_id: pena.id, max_dias_sueltos: fiestaForm.max_dias_sueltos ?? null, locked: fiestaForm.locked || false };
     const r = await adminSaveFiesta(editFiesta?.id || null, payload);
     if (r.error) { toast.error(r.error); return; }
+    if (requiresApproval !== !!(pena as any).requires_approval) {
+      await adminToggleApproval(pena.id, requiresApproval);
+    }
     toast.success(editFiesta ? "Fiesta actualizada" : "Fiesta creada");
     setShowFiestaModal(false); setEditFiesta(null); setFiestaForm({ nombre: "", fecha_inicio: "", fecha_fin: "", max_dias_sueltos: null, locked: false });
     loadData();
@@ -430,12 +433,22 @@ export default function AdminPage() {
             })()}
           </div>
           <div className="flex items-center gap-3">
-            <label className="text-sm font-bold">Cerrada (solo consulta)</label>
-            <button type="button" onClick={() => setFiestaForm({ ...fiestaForm, locked: !fiestaForm.locked })}
-              className={"px-3 py-1 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + (fiestaForm.locked ? "bg-[var(--color-yellow)]" : "bg-[var(--bg-page)]")}>
-              {fiestaForm.locked ? "Cerrada" : "Abierta"}
+            <label className="text-sm font-bold">Aprobación de nuevos miembros</label>
+            <button type="button" onClick={() => setRequiresApproval(!requiresApproval)}
+              className={"px-3 py-1 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + (requiresApproval ? "bg-[var(--color-yellow)]" : "bg-[var(--color-teal)]")}>
+              {requiresApproval ? "Con aprobación" : "Acceso libre"}
             </button>
           </div>
+
+          {editFiesta && (
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-bold">Cerrada (solo consulta)</label>
+              <button type="button" onClick={() => setFiestaForm({ ...fiestaForm, locked: !fiestaForm.locked })}
+                className={"px-3 py-1 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + (fiestaForm.locked ? "bg-[var(--color-yellow)]" : "bg-[var(--bg-page)]")}>
+                {fiestaForm.locked ? "Cerrada" : "Abierta"}
+              </button>
+            </div>
+          )}
 
           <Button onClick={handleSaveFiesta} className="w-full">{editFiesta ? "Actualizar" : "Crear"} fiesta</Button>
         </div>
