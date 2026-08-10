@@ -10,9 +10,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Trash2, Edit, Download, Copy, FileText, Zap } from "lucide-react";
+import { Plus, Trash2, Edit, Download, Copy, FileText, Zap, RotateCcw } from "lucide-react";
 import type { ProductoCatalogo, Fiesta, Asistencia } from "@/types/database";
 import { jsPDF } from "jspdf";
+import { restaurarCatalogo } from "@/app/pena/actions";
 
 function getConsumo(pena: any): Record<string, number> {
   return {
@@ -197,6 +198,7 @@ export default function CalculadoraPage() {
                 <h2 className="text-lg font-semibold">Catálogo de productos</h2>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={autoFillFromAttendance} title="Auto-rellenar cantidades desde asistencia"><Zap className="w-3.5 h-3.5 mr-1" /> Auto-rellenar</Button>
+                  {isAdmin && <Button size="sm" variant="outline" onClick={async () => { if (!pena) return; const r = await restaurarCatalogo(pena.id); if (r.error) { toast.error(r.error); return; } toast.success("Catálogo restablecido (" + (r as any).count + " productos)"); loadProductos(); }} title="Restablecer catálogo por defecto"><RotateCcw className="w-3.5 h-3.5 mr-1" /> Restablecer</Button>}
                   {isAdmin && <Button size="sm" onClick={() => { setEditProducto(null); setForm({ nombre: "", categoria: "", precio_estimado: "", unidad: "ud" }); setShowProductoModal(true); }}><Plus className="w-3.5 h-3.5 mr-1" /> Añadir</Button>}
                 </div>
               </div>
