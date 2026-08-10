@@ -48,32 +48,51 @@ export async function adminSaveFiesta(fiestaId: string | null, data: any) {
   if (!user) return { error: "No autenticado" };
 
   const admin = getAdminClient();
+
   if (fiestaId) {
     const { error } = await admin.from("fiestas").update(data as any).eq("id", fiestaId);
     if (error) return { error: error.message };
-  } else {
-    const { data: inserted, error } = await admin.from("fiestas").insert(data).select("id");
-    if (error) return { error: error.message };
+    revalidatePath("/", "layout");
+    return { success: true };
+  }
 
-    const newId = inserted?.[0]?.id;
-    if (newId && data.fecha_inicio && data.fecha_fin) {
-      const start = new Date(data.fecha_inicio);
-      const end = new Date(data.fecha_fin);
-      const dias = [];
-      const cur = new Date(start);
-      while (cur <= end) {
-        dias.push({ fiesta_id: newId, fecha: cur.toISOString().slice(0, 10), nombre: null });
-        cur.setDate(cur.getDate() + 1);
-      }
-      if (dias.length > 0) {
-        const { error: diaError } = await admin.from("dias_fiesta").insert(dias);
-        if (diaError) console.error("Error creando dias:", diaError.message);
-      }
+  // Al crear una fiesta nueva, desactivar las anteriores
+  const { data: activas } = await admin
+    .from("fiestas")
+    .select("id,nombre")
+    .eq("pena_id", data.pena_id)
+    .eq("activa", true);
+  const fiestasPrevias = activas || [];
+
+  if (fiestasPrevias.length > 0) {
+    await admin.from("fiestas").update({ activa: false }).eq("pena_id", data.pena_id).eq("activa", true);
+  }
+
+  const { data: inserted, error } = await admin.from("fiestas").insert({ ...data, activa: true }).select("id");
+  if (error) return { error: error.message };
+
+  const newId = inserted?.[0]?.id;
+  if (newId && data.fecha_inicio && data.fecha_fin) {
+    const start = new Date(data.fecha_inicio);
+    const end = new Date(data.fecha_fin);
+    const dias = [];
+    const cur = new Date(start);
+    while (cur <= end) {
+      dias.push({ fiesta_id: newId, fecha: cur.toISOString().slice(0, 10), nombre: null });
+      cur.setDate(cur.getDate() + 1);
+    }
+    if (dias.length > 0) {
+      const { error: diaError } = await admin.from("dias_fiesta").insert(dias);
+      if (diaError) console.error("Error creando dias:", diaError.message);
     }
   }
 
   revalidatePath("/", "layout");
-  return { success: true };
+  return {
+    success: true,
+    fiestaId: newId,
+    desactivadas: fiestasPrevias.length > 0 ? fiestasPrevias.map((f: any) => f.nombre) : [],
+  };
 }
 
 export async function adminAddDia(fiestaId: string, fecha: string, nombre: string | null) {

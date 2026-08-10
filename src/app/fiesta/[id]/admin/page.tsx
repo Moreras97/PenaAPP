@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { usePena } from "@/context/PenaContext";
 import { PageHeader } from "@/components/ui/page-header";
@@ -27,6 +28,7 @@ export default function AdminPage() {
   const [pendingMembers, setPendingMembers] = useState<PendingMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [requiresApproval, setRequiresApproval] = useState(false);
+  const router = useRouter();
   const isAdmin = userPena?.rol === "admin";
 
   const [showFiestaModal, setShowFiestaModal] = useState(false);
@@ -76,16 +78,36 @@ export default function AdminPage() {
 
   const handleSaveFiesta = async () => {
     if (!pena) return;
+
+    // Si es nueva fiesta y hay fiestas activas, avisar
+    if (!editFiesta) {
+      const activas = fiestas.filter(f => f.activa);
+      if (activas.length > 0) {
+        const nombres = activas.map(f => f.nombre).join(", ");
+        if (!confirm(`Hay ${activas.length === 1 ? "una fiesta activa" : "fiestas activas"}: ${nombres}. Crear una nueva fiesta las desactivará. ¿Estás seguro de continuar?`)) {
+          return;
+        }
+      }
+    }
+
     const payload = { ...fiestaForm, pena_id: pena.id, max_dias_sueltos: fiestaForm.max_dias_sueltos ?? null, locked: fiestaForm.locked || false };
     const r = await adminSaveFiesta(editFiesta?.id || null, payload);
     if (r.error) { toast.error(r.error); return; }
     if (requiresApproval !== !!(pena as any).requires_approval) {
       await adminToggleApproval(pena.id, requiresApproval);
     }
+    if ((r as any).desactivadas?.length > 0) {
+      toast.warning("Se han desactivado: " + (r as any).desactivadas.join(", "));
+    }
     toast.success(editFiesta ? "Fiesta actualizada" : "Fiesta creada");
     setShowFiestaModal(false); setEditFiesta(null); setFiestaForm({ nombre: "", fecha_inicio: "", fecha_fin: "", max_dias_sueltos: null, locked: false });
     loadData();
     triggerRefresh();
+
+    // Redirigir a la nueva fiesta
+    if (!editFiesta && (r as any).fiestaId) {
+      router.push(`/fiesta/${(r as any).fiestaId}`);
+    }
   };
 
   const handleDeleteFiestaRequest = (id: string) => {
