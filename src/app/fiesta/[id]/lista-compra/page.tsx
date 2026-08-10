@@ -119,11 +119,10 @@ export default function ListaCompraPage() {
       } else if (a.bebida === "tinto") {
         tintoPersonas++;
         tintoDias += diasAsiste;
-      }
-
-      if (a.bebida !== "nada") {
+      } else if (a.bebida === "refresco") {
         refrescoPersonas++;
         refrescoDias += diasAsiste;
+      } else if (a.bebida === "agua") {
         aguaPersonas++;
         aguaDias += diasAsiste;
       }

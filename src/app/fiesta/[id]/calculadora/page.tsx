@@ -102,10 +102,11 @@ export default function CalculadoraPage() {
       hieloDias += diasAsiste;
       if (a.bebida === "cerveza") cervezaDias += diasAsiste;
       else if (a.bebida === "tinto") tintoDias += diasAsiste;
+      else if (a.bebida === "refresco") refrescoDias += diasAsiste;
+      else if (a.bebida === "agua") aguaDias += diasAsiste;
       else if (a.bebida === "cubatas" && a.marca_alcohol) {
         cubataDias[a.marca_alcohol] = (cubataDias[a.marca_alcohol] || 0) + diasAsiste;
       }
-      if (a.bebida !== "nada") { refrescoDias += diasAsiste; aguaDias += diasAsiste; }
     }
 
     const c = getConsumo(pena);
