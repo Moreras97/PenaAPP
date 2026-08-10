@@ -171,6 +171,7 @@ export default function AsistenciaPage() {
     toast.success("Asistencia guardada");
     await loadData();
     triggerRefresh();
+    router.refresh();
   };
 
   const handleDelete = async () => {
@@ -182,6 +183,7 @@ export default function AsistenciaPage() {
     toast.success("Inscripción cancelada");
     await loadData();
     triggerRefresh();
+    router.refresh();
   };
 
   return (

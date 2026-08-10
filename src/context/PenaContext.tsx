@@ -35,11 +35,21 @@ const PenaContext = createContext<PenaContextType>({
 
 export function PenaProvider({ children }: { children: ReactNode }) {
   const [memberships, setMemberships] = useState<PenaMembership[]>([]);
-  const [activePenaId, setActivePenaId] = useState<string | null>(null);
+  const [activePenaId, setActivePenaId] = useState<string | null>(() => {
+    if (typeof window !== "undefined") return localStorage.getItem("activePenaId");
+    return null;
+  });
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const triggerRefresh = useCallback(() => setRefreshKey(k => k + 1), []);
+
+  // Persist active peña to localStorage
+  useEffect(() => {
+    if (activePenaId) {
+      localStorage.setItem("activePenaId", activePenaId);
+    }
+  }, [activePenaId]);
 
   const loadPenas = async () => {
     const supabase = createClient();
@@ -68,7 +78,13 @@ export function PenaProvider({ children }: { children: ReactNode }) {
         },
       }));
       setMemberships(list);
-      if (!activePenaId) setActivePenaId(list[0].pena.id);
+      const savedId = typeof window !== "undefined" ? localStorage.getItem("activePenaId") : null;
+      const savedStillValid = savedId && list.some(m => m.pena.id === savedId);
+      if (savedStillValid) {
+        setActivePenaId(savedId);
+      } else if (!activePenaId || !list.some(m => m.pena.id === activePenaId)) {
+        setActivePenaId(list[0].pena.id);
+      }
     } else {
       setMemberships([]);
       setActivePenaId(null);
