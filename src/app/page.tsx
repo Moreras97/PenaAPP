@@ -5,13 +5,52 @@ import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Sparkles, Plus, LogIn, CalendarDays, Clock, Lock } from "lucide-react";
+import { Sparkles, Plus, LogIn, CalendarDays, Clock, Lock, Users, Crown, Shield, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+
+function PenaSelector({ memberships, activePena, switchPena }: { memberships: any[]; activePena: any; switchPena: (id: string) => void }) {
+  if (memberships.length <= 1) return null;
+  return (
+    <div className="max-w-2xl mx-auto px-4 mb-4">
+      <div className="flex items-center gap-2 mb-2">
+        <Users className="w-4 h-4 opacity-50" />
+        <span className="text-xs font-bold opacity-50 lowercase">{memberships.length} peñas</span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {memberships.map((m) => {
+          const isActive = m.pena.id === activePena?.id;
+          const Icon = m.userPena.rol === "admin" ? Crown : m.userPena.rol === "mod" ? Shield : User;
+          return (
+            <button
+              key={m.pena.id}
+              onClick={() => switchPena(m.pena.id)}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 text-sm font-bold lowercase rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down transition",
+                isActive ? "bg-[var(--color-primary)] text-white" : "bg-[var(--bg-surface)]"
+              )}
+            >
+              {m.pena.escudo_url ? (
+                <img src={m.pena.escudo_url} alt={m.pena.nombre} className="w-5 h-5 rounded-full border border-[var(--border-color)]" />
+              ) : (
+                <div className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-extrabold uppercase", isActive ? "bg-white/20" : "bg-[var(--color-primary)]")}>
+                  <span className={isActive ? "text-white" : "text-white"}>{m.pena.nombre[0]}</span>
+                </div>
+              )}
+              <span>{m.pena.nombre}</span>
+              <Icon className="w-3 h-3 opacity-60" />
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default function HomePage() {
-  const { activePena, loading } = usePena();
+  const { activePena, memberships, switchPena, loading } = usePena();
   const router = useRouter();
   const [fiestas, setFiestas] = useState<any[]>([]);
   const [loadingFiestas, setLoadingFiestas] = useState(true);
@@ -34,16 +73,29 @@ export default function HomePage() {
     return (
       <div className="min-h-screen bg-[var(--bg-page)]">
         <nav className="bg-[var(--bg-surface)] border-b-2 border-[var(--border-color)] shadow-brutalist mx-4 rounded-[var(--radius-lg)]">
-          <div className="max-w-7xl mx-auto px-6 h-16 flex items-center">
+          <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-[var(--color-primary)] border-2 border-[var(--border-color)] rounded-full flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
+              {activePena.escudo_url ? (
+                <img src={activePena.escudo_url} alt={activePena.nombre} className="w-9 h-9 rounded-full border-2 border-[var(--border-color)] object-cover" />
+              ) : (
+                <div className="w-9 h-9 bg-[var(--color-primary)] border-2 border-[var(--border-color)] rounded-full flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+              )}
               <span className="font-extrabold text-lg lowercase">{activePena.nombre}</span>
             </Link>
+            <div className="flex gap-2">
+              <Link href="/pena/crear" className="px-3 py-1.5 bg-[var(--bg-page)] border-brutalist shadow-brutalist-sm rounded-[var(--radius-md)] press-down text-sm font-bold lowercase flex items-center gap-1">
+                <Plus className="w-3.5 h-3.5" /> crear
+              </Link>
+              <Link href="/pena/unirse" className="px-3 py-1.5 bg-[var(--bg-page)] border-brutalist shadow-brutalist-sm rounded-[var(--radius-md)] press-down text-sm font-bold lowercase flex items-center gap-1">
+                <LogIn className="w-3.5 h-3.5" /> unirse
+              </Link>
+            </div>
           </div>
         </nav>
-        <main className="max-w-lg mx-auto px-4 pt-24 text-center space-y-6">
+        <PenaSelector memberships={memberships} activePena={activePena} switchPena={switchPena} />
+        <main className="max-w-lg mx-auto px-4 pt-12 text-center space-y-6">
           <CalendarDays className="w-16 h-16 mx-auto opacity-30" />
           <h2 className="text-2xl font-extrabold lowercase">no hay fiestas todavía</h2>
           <p className="text-[var(--text-secondary)]">el administrador debe crear la primera fiesta</p>
@@ -80,7 +132,9 @@ export default function HomePage() {
         </div>
       </nav>
 
-      <main className="max-w-2xl mx-auto px-4 pt-8 pb-8">
+      <PenaSelector memberships={memberships} activePena={activePena} switchPena={switchPena} />
+
+      <main className="max-w-2xl mx-auto px-4 pt-4 pb-8">
         <div className="flex items-center gap-3 mb-6">
           <CalendarDays className="w-6 h-6" />
           <h2 className="text-xl font-extrabold lowercase">fiestas de {activePena.nombre}</h2>
