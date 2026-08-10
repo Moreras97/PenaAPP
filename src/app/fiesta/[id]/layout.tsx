@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
+import { salirDePena } from "@/app/pena/actions";
 
 const navItems = [
   { href: "asistencia", icon: Calendar, label: "Asistencia" },
@@ -38,13 +39,14 @@ export default function FiestaLayout({ children }: { children: React.ReactNode }
   };
 
   const handleLeavePena = async () => {
-    if (!activePena || !memberships[0]) return;
-    if (!confirm("Seguro que quieres salir de " + activePena.nombre + "?")) return;
-    const s = createClient();
-    if (!s) return;
-    const { data: { user } } = await s.auth.getUser();
-    if (!user) return;
-    await s.from("users_penas").delete().eq("user_id", user.id).eq("pena_id", activePena.id);
+    if (!activePena) return;
+    if (!confirm("¿Seguro que quieres salir de " + activePena.nombre + "?")) return;
+    const r = await salirDePena(activePena.id);
+    if (r.error) { toast.error(r.error); return; }
+    if ((r as any).esUltimo) {
+      toast.warning("Eras el último miembro. La peña ha quedado vacía.");
+    }
+    toast.success("Has salido de la peña");
     window.location.reload();
   };
   const fiestasRef = useRef<HTMLDivElement>(null);
@@ -92,10 +94,10 @@ export default function FiestaLayout({ children }: { children: React.ReactNode }
           <p className="text-[var(--text-secondary)]">crea una peña nueva o únete a una existente</p>
           <div className="flex gap-4 justify-center">
             <Link href="/pena/crear" className="px-6 py-3 bg-[var(--color-primary)] text-white font-bold border-brutalist shadow-brutalist rounded-[var(--radius-md)] press-down flex items-center gap-2">
-              <Plus className="w-4 h-4" /> crear
+              <Plus className="w-4 h-4" /> crear peña
             </Link>
             <Link href="/pena/unirse" className="px-6 py-3 bg-[var(--bg-surface)] font-bold border-brutalist shadow-brutalist rounded-[var(--radius-md)] press-down flex items-center gap-2">
-              <LogIn className="w-4 h-4" /> unirse
+              <LogIn className="w-4 h-4" /> unirse a peña
             </Link>
           </div>
         </main>
@@ -146,7 +148,7 @@ export default function FiestaLayout({ children }: { children: React.ReactNode }
                   onClick={() => setMenuOpen(!menuOpen)}
                   className="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 bg-[var(--bg-page)] border-brutalist shadow-brutalist-sm rounded-[var(--radius-md)] press-down text-xs sm:text-sm font-bold lowercase"
                 >
-                  cambiar <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
+                  cambiar de peña <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
                 </button>
                 {menuOpen && (
                   <div className="absolute right-0 top-full mt-2 bg-[var(--bg-surface)] border-brutalist shadow-brutalist rounded-[var(--radius-md)] py-1 min-w-[180px] z-30">
@@ -177,10 +179,10 @@ export default function FiestaLayout({ children }: { children: React.ReactNode }
               </div>
             )}
             <Link href="/pena/crear" className="flex items-center gap-1 px-2 sm:px-3 py-1.5 bg-[var(--bg-page)] border-brutalist shadow-brutalist-sm rounded-[var(--radius-md)] press-down text-xs sm:text-sm font-bold lowercase">
-              <Plus className="w-3 h-3 sm:w-4 sm:h-4" /> crear
+               <Plus className="w-3 h-3 sm:w-4 sm:h-4" /> crear peña
             </Link>
             <Link href="/pena/unirse" className="flex items-center gap-1 px-2 sm:px-3 py-1.5 bg-[var(--bg-page)] border-brutalist shadow-brutalist-sm rounded-[var(--radius-md)] press-down text-xs sm:text-sm font-bold lowercase">
-              <LogIn className="w-3 h-3 sm:w-4 sm:h-4" /> unirse
+              <LogIn className="w-3 h-3 sm:w-4 sm:h-4" /> unirse a peña
             </Link>
             <button onClick={handleLogout} className="flex items-center gap-1 px-2 sm:px-3 py-1.5 bg-[var(--bg-page)] border-brutalist shadow-brutalist-sm rounded-[var(--radius-md)] press-down text-xs sm:text-sm font-bold lowercase hover:bg-red-50" title="Cerrar sesion">
               <LogOut className="w-3 h-3 sm:w-4 sm:h-4" />

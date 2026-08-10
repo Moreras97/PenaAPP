@@ -83,13 +83,13 @@ export default function FinanzasPage() {
 
   return (
     <div>
-      <PageHeader title="Finanzas" description="Bote común, gastos y adelantos" actions={
+      <PageHeader title="Finanzas" description="Dinero de la peña y gastos personales" actions={
         <Button onClick={() => setShowModal(true)}><Plus className="w-4 h-4 mr-1" /> Nuevo gasto</Button>
       } />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <Card><CardContent className="pt-4 text-center"><p className="text-sm text-gray-500">Gastos bote común</p><p className="text-2xl font-bold text-red-600">{totalBote.toFixed(2)}€</p></CardContent></Card>
-        <Card><CardContent className="pt-4 text-center"><p className="text-sm text-gray-500">Adelantos pendientes</p><p className="text-2xl font-bold text-orange-600">{totalAdelantos.toFixed(2)}€</p></CardContent></Card>
+        <Card><CardContent className="pt-4 text-center"><p className="text-sm text-gray-500">Dinero de la peña</p><p className="text-2xl font-bold text-red-600">{totalBote.toFixed(2)}€</p></CardContent></Card>
+        <Card><CardContent className="pt-4 text-center"><p className="text-sm text-gray-500">Dinero personal pendiente</p><p className="text-2xl font-bold text-orange-600">{totalAdelantos.toFixed(2)}€</p></CardContent></Card>
         <Card><CardContent className="pt-4 text-center"><p className="text-sm text-gray-500">Cuotas pendientes</p><p className="text-2xl font-bold text-gray-600">{miembrosCuotas.length} miembros</p></CardContent></Card>
       </div>
 
@@ -117,7 +117,7 @@ export default function FinanzasPage() {
                   <tr key={g.id} className="border-b">
                     <td className="py-2">{g.fecha}</td>
                     <td className="py-2">{g.concepto}{g.beneficiario && <span className="text-gray-400 text-xs ml-1">({g.beneficiario.nombre_completo})</span>}</td>
-                    <td className="py-2"><Badge variant={g.tipo === "bote_comun" ? "default" : "warning"}>{g.tipo === "bote_comun" ? "Bote" : "Adelanto"}</Badge></td>
+                    <td className="py-2"><Badge variant={g.tipo === "bote_comun" ? "default" : "warning"}>{g.tipo === "bote_comun" ? "Peña" : "Personal"}</Badge></td>
                     <td className="text-right py-2 font-medium">{g.importe.toFixed(2)}€</td>
                     <td className="text-center py-2">{g.tipo === "adelanto_personal" && <Badge variant={g.saldado ? "success" : "danger"}>{g.saldado ? "Saldado" : "Pendiente"}</Badge>}</td>
                     {isAdmin && <td className="text-right py-2">{g.tipo === "adelanto_personal" && !g.saldado && <Button size="sm" variant="outline" onClick={() => handleSaldar(g.id)}>Saldar</Button>}</td>}
@@ -135,8 +135,8 @@ export default function FinanzasPage() {
           <div>
             <label className="block text-sm font-medium mb-1">Tipo</label>
             <select value={form.tipo} onChange={e => setForm({ ...form, tipo: e.target.value as typeof form.tipo })} className="w-full px-3 py-2 border rounded-[var(--radius-md)]">
-              <option value="bote_comun">Gasto del bote común</option>
-              <option value="adelanto_personal">Adelanto personal</option>
+              <option value="bote_comun">Dinero de la peña</option>
+              <option value="adelanto_personal">Dinero personal</option>
             </select>
           </div>
           <div><label className="block text-sm font-medium mb-1">Concepto</label><input value={form.concepto} onChange={e => setForm({ ...form, concepto: e.target.value })} className="w-full px-3 py-2 border rounded-[var(--radius-md)]" required /></div>

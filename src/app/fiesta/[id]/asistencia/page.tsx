@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { usePena } from "@/context/PenaContext";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -196,7 +197,10 @@ export default function AsistenciaPage() {
       {!fiestaActiva ? (
         <div className="text-center py-12 px-4">
           <p className="text-lg font-bold mb-2">Fiesta no encontrada</p>
-          <p className="text-sm">La fiesta solicitada no existe o no pertenece a esta peña.</p>
+          <p className="text-sm mb-4">La fiesta solicitada no existe o no pertenece a esta peña.</p>
+          <Link href={`/fiesta/${params.id}/admin`}>
+            <Button variant="primary">Crear fiesta</Button>
+          </Link>
         </div>
       ) : (
         <div className="space-y-6">

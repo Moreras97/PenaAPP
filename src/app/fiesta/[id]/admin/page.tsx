@@ -12,6 +12,7 @@ import { Modal } from "@/components/ui/modal";
 import { toast } from "sonner";
 import { Plus, Trash2, Edit, Upload, Check, X, Crown, Shield, User, UserPlus } from "lucide-react";
 import { adminDeleteFiesta, adminSaveFiesta, adminAddDia, adminChangeRole, adminToggleApproval, adminApproveOrReject, adminUploadEscudo, adminSaveTheme, adminSaveConsumo } from "./actions";
+import { adminUpdateProfile, adminSavePenaInfo } from "@/app/pena/actions";
 import type { Fiesta, UserPena } from "@/types/database";
 
 interface PendingMember {
@@ -192,7 +193,7 @@ export default function AdminPage() {
     { key: "fiestas" as const, label: "Fiestas" },
     { key: "miembros" as const, label: "Miembros" },
     ...(isAdmin ? [{ key: "aprobaciones" as const, label: "Aprobaciones" + (pendingMembers.length > 0 ? " (" + pendingMembers.length + ")" : "") }] : []),
-    { key: "theming" as const, label: "Tematización" },
+    { key: "theming" as const, label: "Personalización" },
     { key: "consumo" as const, label: "Consumo" },
   ];
 
@@ -297,6 +298,63 @@ export default function AdminPage() {
 
       {tab === "theming" && (
         <div className="max-w-md">
+          <Card className="mb-4">
+            <CardContent className="pt-4">
+              <h2 className="text-lg font-bold mb-4">Tu perfil</h2>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-bold mb-1">Nombre completo</label>
+                  <input type="text" value={userPena?.nombre_completo || ""}
+                    onChange={e => { /* handled by ref */ }}
+                    id="profile-nombre"
+                    className="w-full border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-3 py-2 font-medium" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold mb-1">Apodo</label>
+                  <input type="text" defaultValue={userPena?.apodo || ""}
+                    id="profile-apodo"
+                    className="w-full border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-3 py-2 font-medium" />
+                </div>
+                <Button size="sm" onClick={async () => {
+                  const nombre = (document.getElementById("profile-nombre") as HTMLInputElement)?.value;
+                  const apodo = (document.getElementById("profile-apodo") as HTMLInputElement)?.value;
+                  if (!nombre || !userPena) return;
+                  const r = await adminUpdateProfile(userPena.id, nombre, apodo || null);
+                  if (r.error) { toast.error(r.error); return; }
+                  toast.success("Perfil actualizado"); refresh();
+                }}>Guardar perfil</Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="mb-4">
+            <CardContent className="pt-4">
+              <h2 className="text-lg font-bold mb-4">Ubicación de la peña</h2>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-bold mb-1">Provincia</label>
+                  <input type="text" defaultValue={pena?.provincia || ""}
+                    id="pena-provincia"
+                    className="w-full border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-3 py-2 font-medium" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold mb-1">Población</label>
+                  <input type="text" defaultValue={pena?.poblacion || ""}
+                    id="pena-poblacion"
+                    className="w-full border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-3 py-2 font-medium" />
+                </div>
+                <Button size="sm" onClick={async () => {
+                  const prov = (document.getElementById("pena-provincia") as HTMLInputElement)?.value;
+                  const pob = (document.getElementById("pena-poblacion") as HTMLInputElement)?.value;
+                  if (!pena) return;
+                  const r = await adminSavePenaInfo(pena.id, prov || null, pob || null);
+                  if (r.error) { toast.error(r.error); return; }
+                  toast.success("Ubicación actualizada"); refresh();
+                }}>Guardar ubicación</Button>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card className="mb-4">
             <CardContent className="pt-4">
               <h2 className="text-lg font-bold mb-4">Escudo / Logo</h2>
@@ -472,13 +530,6 @@ export default function AdminPage() {
                 ? "Los miembros deben asistir todos los días de la fiesta."
                 : "Cada miembro puede elegir los días que quiera venir. Si alcanza el máximo, se le asignará automáticamente las fiestas completas."}
             </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-bold">Aprobación de nuevos miembros</label>
-            <button type="button" onClick={() => setRequiresApproval(!requiresApproval)}
-              className={"px-3 py-1 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + (requiresApproval ? "bg-[var(--color-yellow)]" : "bg-[var(--color-teal)]")}>
-              {requiresApproval ? "Con aprobación" : "Acceso libre"}
-            </button>
           </div>
 
           {editFiesta && (
