@@ -257,7 +257,7 @@ export default function AdminPage() {
                   </div>
                   <div><p className="font-bold">{m.nombre_completo} {m.apodo && <span className="text-sm">({m.apodo})</span>}</p><p className="text-xs capitalize">{m.rol}</p></div>
                 </div>
-                {isAdmin && (
+      {(tab === "miembros" || tab === "aprobaciones") && isAdmin && (
                   <div className="flex gap-1">
                     {m.rol === "miembro" && <Button size="sm" variant="outline" onClick={() => handleChangeRole(m.id, "mod")}>Hacer mod</Button>}
                     {m.rol === "mod" && <Button size="sm" variant="outline" onClick={() => handleChangeRole(m.id, "miembro")}>Quitar mod</Button>}
