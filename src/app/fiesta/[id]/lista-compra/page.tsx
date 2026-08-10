@@ -89,7 +89,7 @@ export default function ListaCompraPage() {
     if (!dias?.length || !asistencias?.length) { setFilas([]); setLoading(false); return; }
 
     // 3. Calcular persona-días: para cada asistencia, cuántos días asiste
-    // semana_completa: todos los días, dias_sueltos: los días seleccionados
+    // fiestas_completas: todos los días, dias_sueltos: los días seleccionados
     const totalDias = dias.length;
 
     // Agrupar: marca_alcohol -> {personas: string[], dias_persona: number}

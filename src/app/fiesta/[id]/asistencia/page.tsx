@@ -205,7 +205,7 @@ export default function AsistenciaPage() {
                 <div className="flex gap-2">
                   <button onClick={() => setTipo("semana_completa")}
                     className={"px-4 py-2 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + (tipo === "semana_completa" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--bg-page)]")}>
-                    Semana Completa
+                    Fiestas Completas
                   </button>
                   <button onClick={() => setTipo("dias_sueltos")} disabled={maxDiasSueltos === 0}
                     className={"px-4 py-2 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + (tipo === "dias_sueltos" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--bg-page)]") + (maxDiasSueltos === 0 ? " opacity-50 cursor-not-allowed" : "")}>

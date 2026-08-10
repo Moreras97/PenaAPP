@@ -419,7 +419,7 @@ export default function AdminPage() {
               <button type="button"
                 onClick={() => setFiestaForm({ ...fiestaForm, max_dias_sueltos: 0 })}
                 className={"px-3 py-2 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + ((fiestaForm.max_dias_sueltos ?? 0) === 0 ? "bg-[var(--color-primary)] text-white" : "bg-[var(--bg-page)]")}>
-                Solo semana completa
+                Solo fiestas completas
               </button>
               <button type="button"
                 onClick={() => setFiestaForm({ ...fiestaForm, max_dias_sueltos: fiestaForm.max_dias_sueltos === 0 || fiestaForm.max_dias_sueltos == null ? 1 : fiestaForm.max_dias_sueltos })}
@@ -446,7 +446,7 @@ export default function AdminPage() {
             <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
               {(fiestaForm.max_dias_sueltos ?? 0) === 0
                 ? "Los miembros deben asistir todos los días de la fiesta."
-                : "Cada miembro puede elegir los días que quiera venir. Si alcanza el máximo, se le asignará automáticamente la semana completa."}
+                : "Cada miembro puede elegir los días que quiera venir. Si alcanza el máximo, se le asignará automáticamente las fiestas completas."}
             </p>
           </div>
           <div className="flex items-center gap-3">
