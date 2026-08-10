@@ -413,24 +413,41 @@ export default function AdminPage() {
             <div><label className="block text-sm font-bold mb-1">Fecha inicio</label><input type="date" value={fiestaForm.fecha_inicio} onChange={e => setFiestaForm({ ...fiestaForm, fecha_inicio: e.target.value })} className="w-full border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-3 py-2" required /></div>
             <div><label className="block text-sm font-bold mb-1">Fecha fin</label><input type="date" value={fiestaForm.fecha_fin} onChange={e => setFiestaForm({ ...fiestaForm, fecha_fin: e.target.value })} className="w-full border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-3 py-2" required /></div>
           </div>
-          <div>
-            <label className="block text-sm font-bold mb-1">Dias sueltos maximos</label>
+          <div className="space-y-1.5">
+            <label className="block text-sm font-bold">Modalidad de asistencia</label>
+            <div className="flex items-center gap-2">
+              <button type="button"
+                onClick={() => setFiestaForm({ ...fiestaForm, max_dias_sueltos: 0 })}
+                className={"px-3 py-2 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + ((fiestaForm.max_dias_sueltos ?? 0) === 0 ? "bg-[var(--color-primary)] text-white" : "bg-[var(--bg-page)]")}>
+                Solo semana completa
+              </button>
+              <button type="button"
+                onClick={() => setFiestaForm({ ...fiestaForm, max_dias_sueltos: fiestaForm.max_dias_sueltos === 0 || fiestaForm.max_dias_sueltos == null ? 1 : fiestaForm.max_dias_sueltos })}
+                className={"px-3 py-2 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + ((fiestaForm.max_dias_sueltos ?? 0) > 0 ? "bg-[var(--color-primary)] text-white" : "bg-[var(--bg-page)]")}>
+                Permitir días sueltos
+              </button>
+            </div>
             {(() => {
               const inicio = new Date(fiestaForm.fecha_inicio);
               const fin = new Date(fiestaForm.fecha_fin);
               const diff = fiestaForm.fecha_inicio && fiestaForm.fecha_fin && fin >= inicio
                 ? Math.floor((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)) + 1
                 : 0;
-              return (
-            <select value={fiestaForm.max_dias_sueltos ?? 0} onChange={e => setFiestaForm({ ...fiestaForm, max_dias_sueltos: parseInt(e.target.value) })}>
-              <option value="0">Solo semana completa</option>
-              {diff > 0 && Array.from({ length: diff }, (_, i) => i + 1).map(n => (
-                <option key={n} value={n}>{n} {n === 1 ? "día suelto" : "días sueltos"}</option>
-              ))}
-              <option value="999">Sin limite</option>
-            </select>
-              );
+              return null;
             })()}
+            {(fiestaForm.max_dias_sueltos ?? 0) > 0 && (
+              <div className="flex items-center gap-2 mt-2">
+                <label className="text-sm font-bold shrink-0">Máximo de días sueltos:</label>
+                <input type="number" min={1} max={999} value={fiestaForm.max_dias_sueltos ?? 1}
+                  onChange={e => setFiestaForm({ ...fiestaForm, max_dias_sueltos: Math.max(1, parseInt(e.target.value) || 1) })}
+                  className="w-16 border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-2 py-1 text-sm text-center font-bold" />
+              </div>
+            )}
+            <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+              {(fiestaForm.max_dias_sueltos ?? 0) === 0
+                ? "Los miembros deben asistir todos los días de la fiesta."
+                : "Cada miembro puede elegir los días que quiera venir. Si alcanza el máximo, se le asignará automáticamente la semana completa."}
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <label className="text-sm font-bold">Aprobación de nuevos miembros</label>
