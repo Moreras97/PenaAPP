@@ -48,6 +48,7 @@ export default function AsistenciaPage() {
   const [tipoAlcohol, setTipoAlcohol] = useState<TipoAlcohol>("ron");
   const [marca, setMarca] = useState("");
   const [mezcla, setMezcla] = useState("");
+  const [tipoRefresco, setTipoRefresco] = useState("");
   const [dashboard, setDashboard] = useState<{ dia: string; total: number; cervezas: number; tintos: number; refrescos: number; aguas: number; cubatas: number; rones: number; vodkas: number; whiskies: number; ginebras: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [debug, setDebug] = useState("");
@@ -83,7 +84,8 @@ export default function AsistenciaPage() {
           const raw = as as any;
           if (raw.tipo_alcohol) setTipoAlcohol(raw.tipo_alcohol as TipoAlcohol);
           if (raw.marca_alcohol) setMarca(raw.marca_alcohol);
-          if (raw.mezcla) setMezcla(raw.mezcla);
+          if (raw.bebida === "refresco" && raw.mezcla) setTipoRefresco(raw.mezcla);
+          else if (raw.bebida === "cubatas" && raw.mezcla) setMezcla(raw.mezcla);
           setDiasSeleccionados((as as unknown as { asistencia_dias: { dia_fiesta_id: string }[] }).asistencia_dias?.map(ad => ad.dia_fiesta_id) || []);
         } else {
           setTipo("dias_sueltos");
@@ -92,6 +94,7 @@ export default function AsistenciaPage() {
           setTipoAlcohol("ron");
           setMarca("");
           setMezcla("");
+          setTipoRefresco("");
         }
       }
 
@@ -163,7 +166,7 @@ export default function AsistenciaPage() {
       bebida: bebida === "nada" ? null : bebida,
       tipo_alcohol: bebida === "cubatas" ? tipoAlcohol : null,
       marca_alcohol: bebida === "cubatas" ? marca : null,
-      mezcla: bebida === "cubatas" ? mezcla : null,
+          mezcla: bebida === "cubatas" ? mezcla : bebida === "refresco" ? tipoRefresco : null,
       asistencia_id: miAsistencia?.id || null,
       dias: tipo === "dias_sueltos" ? diasSeleccionados : [],
     });
@@ -250,6 +253,20 @@ export default function AsistenciaPage() {
                 </div>
               </div>
 
+              {bebida === "refresco" && (
+                <div className="mb-5 bg-[var(--bg-page)] border-brutalist rounded-[var(--radius-md)] p-4 space-y-3">
+                  <p className="text-sm font-bold">Tipo de refresco</p>
+                  <div className="flex flex-wrap gap-2">
+                    {MEZCLAS.map(m => (
+                      <button key={m} onClick={() => setTipoRefresco(m)}
+                        className={"px-3 py-1.5 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + (tipoRefresco === m ? "bg-[var(--color-teal)] text-[var(--text-primary)]" : "bg-[var(--bg-surface)]")}>
+                        {m.replace(" ", "\u00A0")}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {bebida === "cubatas" && (
                 <div className="mb-5 bg-[var(--bg-page)] border-brutalist rounded-[var(--radius-md)] p-4 space-y-4">
                   <p className="text-sm font-bold">Detalles del cubata</p>
@@ -314,15 +331,15 @@ export default function AsistenciaPage() {
                     <tr className="border-b-2 border-[var(--border-color)]">
                       <th className="text-left py-2 font-bold">Dia</th>
                       <th className="text-center py-2 font-bold">Total</th>
-                      <th className="text-center py-2">🍺</th>
-                      <th className="text-center py-2">🍷</th>
-                      <th className="text-center py-2">🥤</th>
-                      <th className="text-center py-2">💧</th>
-                      <th className="text-center py-2">🍹</th>
-                      <th className="text-center py-2 text-xs" title="Ron">🥃R</th>
-                      <th className="text-center py-2 text-xs" title="Vodka">🥃V</th>
-                      <th className="text-center py-2 text-xs" title="Whisky">🥃W</th>
-                      <th className="text-center py-2 text-xs" title="Ginebra">🥃G</th>
+                      <th className="text-center py-2 font-bold text-xs">Cerveza</th>
+                      <th className="text-center py-2 font-bold text-xs">Tinto</th>
+                      <th className="text-center py-2 font-bold text-xs">Refresco</th>
+                      <th className="text-center py-2 font-bold text-xs">Agua</th>
+                      <th className="text-center py-2 font-bold text-xs">Cubatas</th>
+                      <th className="text-center py-2 font-bold text-xs">Ron</th>
+                      <th className="text-center py-2 font-bold text-xs">Vodka</th>
+                      <th className="text-center py-2 font-bold text-xs">Whisky</th>
+                      <th className="text-center py-2 font-bold text-xs">Ginebra</th>
                     </tr>
                   </thead>
                   <tbody>
