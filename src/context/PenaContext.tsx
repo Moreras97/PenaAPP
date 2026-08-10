@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import type { Pena, UserPena } from "@/types/database";
 import { createClient } from "@/lib/supabase/client";
 
@@ -17,6 +17,8 @@ interface PenaContextType {
   loading: boolean;
   refresh: () => void;
   switchPena: (penaId: string) => void;
+  refreshKey: number;
+  triggerRefresh: () => void;
 }
 
 const PenaContext = createContext<PenaContextType>({
@@ -27,12 +29,17 @@ const PenaContext = createContext<PenaContextType>({
   loading: true,
   refresh: () => {},
   switchPena: () => {},
+  refreshKey: 0,
+  triggerRefresh: () => {},
 });
 
 export function PenaProvider({ children }: { children: ReactNode }) {
   const [memberships, setMemberships] = useState<PenaMembership[]>([]);
   const [activePenaId, setActivePenaId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const triggerRefresh = useCallback(() => setRefreshKey(k => k + 1), []);
 
   const loadPenas = async () => {
     const supabase = createClient();
@@ -87,6 +94,8 @@ export function PenaProvider({ children }: { children: ReactNode }) {
         loading,
         refresh: loadPenas,
         switchPena,
+        refreshKey,
+        triggerRefresh,
       }}
     >
       {children}

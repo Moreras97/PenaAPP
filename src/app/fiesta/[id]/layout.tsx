@@ -2,7 +2,7 @@
 
 import { usePena } from "@/context/PenaContext";
 import Link from "next/link";
-import { usePathname, useParams } from "next/navigation";
+import { usePathname, useParams, useRouter } from "next/navigation";
 import { Calendar, MessageCircle, DollarSign, Utensils, Calculator, Settings, Sparkles, Plus, LogIn, ChevronDown, Home, ShoppingCart, Copy, Check, LogOut } from "lucide-react";
 import { Clock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -24,6 +24,7 @@ export default function FiestaLayout({ children }: { children: React.ReactNode }
   const { activePena, memberships, switchPena, loading } = usePena();
   const pathname = usePathname();
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const [fiestas, setFiestas] = useState<{id:string;nombre:string;fecha_inicio:string;fecha_fin:string}[]>([]);
@@ -152,7 +153,7 @@ export default function FiestaLayout({ children }: { children: React.ReactNode }
                     {memberships.map((m) => (
                       <button
                         key={m.pena.id}
-                        onClick={() => { switchPena(m.pena.id); setMenuOpen(false); }}
+                        onClick={() => { switchPena(m.pena.id); setMenuOpen(false); router.push("/"); }}
                         className={cn(
                           "w-full text-left px-4 py-2 text-sm font-bold lowercase hover:bg-[var(--bg-page)] transition",
                           m.pena.id === activePena.id && "bg-[var(--bg-page)]"

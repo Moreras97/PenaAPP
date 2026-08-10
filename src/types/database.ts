@@ -17,6 +17,12 @@ export interface Pena {
   updated_at: string;
   provincia: string | null;
   poblacion: string | null;
+  consumo_cerveza?: number;
+  consumo_tinto?: number;
+  consumo_cubata?: number;
+  consumo_refresco?: number;
+  consumo_agua?: number;
+  consumo_hielo?: number;
 }
 
 export interface UserPena {

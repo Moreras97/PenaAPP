@@ -28,18 +28,30 @@ interface FilaCompra {
   coste_total: number;
 }
 
-// Precios de referencia realistas (España, supermercado, botella 70cl salvo indicado)
-const CONSUMO_POR_PERSONA: Record<string, number> = {
-  cubata: 0.35,   // 35cl de alcohol por persona/día = media botella de 70cl para 2 personas
-  cerveza: 1.0,   // 1 litro por persona/día (~3 latas)
-  tinto: 0.375,    // media botella de vino por persona/día
-  refresco: 1.5,   // 1.5 litros de refresco por persona/día como mezcla
-  agua: 1.0,       // 1 litro de agua por persona/día
-  hielo: 0.5,      // 0.5 kg de hielo por persona/día
+// Factores de consumo por persona/día — valores por defecto
+// El admin puede sobrescribirlos desde Administración > Consumo
+const DEFAULT_CONSUMO: Record<string, number> = {
+  cubata: 0.35,
+  cerveza: 1.0,
+  tinto: 0.375,
+  refresco: 1.5,
+  agua: 1.0,
+  hielo: 0.5,
 };
 
+function getConsumo(pena: any): Record<string, number> {
+  return {
+    cubata: pena?.consumo_cubata ?? DEFAULT_CONSUMO.cubata,
+    cerveza: pena?.consumo_cerveza ?? DEFAULT_CONSUMO.cerveza,
+    tinto: pena?.consumo_tinto ?? DEFAULT_CONSUMO.tinto,
+    refresco: pena?.consumo_refresco ?? DEFAULT_CONSUMO.refresco,
+    agua: pena?.consumo_agua ?? DEFAULT_CONSUMO.agua,
+    hielo: pena?.consumo_hielo ?? DEFAULT_CONSUMO.hielo,
+  };
+}
+
 export default function ListaCompraPage() {
-  const { activePena: pena, activeUserPena: userPena } = usePena();
+  const { activePena: pena, activeUserPena: userPena, refreshKey } = usePena();
   const params = useParams<{ id: string }>();
   const supabase = createClient();
   const [filas, setFilas] = useState<FilaCompra[]>([]);
@@ -65,7 +77,7 @@ export default function ListaCompraPage() {
     if (!supabase || !pena || !params.id) return;
     setLoading(true);
 
-    // 1. Obtener todas las asistencias de la fiesta con días
+    const consumo = getConsumo(pena);
     const { data: asistencias } = await supabase
       .from("asistencias")
       .select("*, users_penas!inner(*), asistencia_dias(*)")
@@ -127,7 +139,7 @@ export default function ListaCompraPage() {
       const prod = productos.find(p => p.nombre === marca);
             const ref = prod ? { precio: prod.precio_referencia || prod.precio_estimado, litros: prod.litros_por_unidad || 0.7, categoria: prod.categoria } : null;
       if (!ref || !ref.precio) continue;
-      const litrosNecesarios = data.personaDias * CONSUMO_POR_PERSONA.cubata;
+      const litrosNecesarios = data.personaDias * consumo.cubata;
       const botellas = Math.ceil(litrosNecesarios / ref.litros);
       const coste = botellas * ref.precio;
       rows.push({
@@ -146,7 +158,7 @@ export default function ListaCompraPage() {
       const prod = productos.find(p => p.nombre === "Cerveza lata 33cl");
         const ref = prod ? { precio: prod.precio_referencia || prod.precio_estimado, litros: prod.litros_por_unidad || 0.33 } : null;
         if (ref) {
-      const litros = cervezaDias * CONSUMO_POR_PERSONA.cerveza;
+      const litros = cervezaDias * consumo.cerveza;
       const latas = Math.ceil(litros / ref.litros);
       rows.push({
         producto: { id: "", nombre: "Cerveza (lata)", categoria: "cerveza", tipo_producto: "bebida", precio_estimado: ref.precio, precio_referencia: ref.precio, precio_manual: null, litros_por_unidad: ref.litros, fuente_precio: "referencia", unidad: "lata 33cl" },
@@ -165,7 +177,7 @@ export default function ListaCompraPage() {
       const prod = productos.find(p => p.nombre === "Tinto botella 75cl");
         const ref = prod ? { precio: prod.precio_referencia || prod.precio_estimado, litros: prod.litros_por_unidad || 0.75 } : null;
         if (ref) {
-      const litros = tintoDias * CONSUMO_POR_PERSONA.tinto;
+      const litros = tintoDias * consumo.tinto;
       const botellas = Math.ceil(litros / ref.litros);
       rows.push({
         producto: { id: "", nombre: "Vino tinto (botella)", categoria: "vino", tipo_producto: "bebida", precio_estimado: ref.precio, precio_referencia: ref.precio, precio_manual: null, litros_por_unidad: ref.litros, fuente_precio: "referencia", unidad: "botella 75cl" },
@@ -184,7 +196,7 @@ export default function ListaCompraPage() {
       const prod = productos.find(p => p.nombre === "Coca-Cola 2L");
         const ref = prod ? { precio: prod.precio_referencia || prod.precio_estimado, litros: prod.litros_por_unidad || 2.0 } : null;
         if (ref) {
-      const litros = refrescoDias * CONSUMO_POR_PERSONA.refresco;
+      const litros = refrescoDias * consumo.refresco;
       const botellas = Math.ceil(litros / ref.litros);
       rows.push({
         producto: { id: "", nombre: "Refrescos (varios)", categoria: "refresco", tipo_producto: "bebida", precio_estimado: ref.precio, precio_referencia: ref.precio, precio_manual: null, litros_por_unidad: ref.litros, fuente_precio: "referencia", unidad: "botella 2L" },
@@ -203,7 +215,7 @@ export default function ListaCompraPage() {
       const prod = productos.find(p => p.nombre === "Agua 1.5L");
         const ref = prod ? { precio: prod.precio_referencia || prod.precio_estimado, litros: prod.litros_por_unidad || 1.5 } : null;
         if (ref) {
-      const litros = aguaDias * CONSUMO_POR_PERSONA.agua;
+      const litros = aguaDias * consumo.agua;
       const botellas = Math.ceil(litros / ref.litros);
       rows.push({
         producto: { id: "", nombre: "Agua (botella)", categoria: "agua", tipo_producto: "bebida", precio_estimado: ref.precio, precio_referencia: ref.precio, precio_manual: null, litros_por_unidad: ref.litros, fuente_precio: "referencia", unidad: "botella 1.5L" },
@@ -222,7 +234,7 @@ export default function ListaCompraPage() {
       const prod = productos.find(p => p.nombre === "Hielo (bolsa 2kg)");
         const ref = prod ? { precio: prod.precio_referencia || prod.precio_estimado, litros: prod.litros_por_unidad || 2.0 } : null;
         if (ref) {
-      const kilos = hieloPersonaDias * CONSUMO_POR_PERSONA.hielo;
+      const kilos = hieloPersonaDias * consumo.hielo;
       const bolsas = Math.ceil(kilos / ref.litros);
       rows.push({
         producto: { id: "", nombre: "Hielo (bolsa)", categoria: "hielo", tipo_producto: "hielo", precio_estimado: ref.precio, precio_referencia: ref.precio, precio_manual: null, litros_por_unidad: ref.litros, fuente_precio: "referencia", unidad: "bolsa 2kg" },
@@ -243,9 +255,9 @@ export default function ListaCompraPage() {
     const litrosAlcohol = rows.filter(r => ["ron", "whisky", "vodka", "ginebra"].includes(r.producto.categoria)).reduce((s, r) => s + r.litros_totales, 0);
     setTotalLitrosAlcohol(Math.round(litrosAlcohol * 100) / 100);
     setLoading(false);
-  }, [supabase, pena, params.id, productos]);
+  }, [supabase, pena, params.id, productos, refreshKey]);
 
-  useEffect(() => { calcularLista(); }, [calcularLista]);
+  useEffect(() => { calcularLista(); }, [calcularLista, refreshKey]);
 
   const handleRefreshPrecios = async () => {
     setRefreshLoading(true);

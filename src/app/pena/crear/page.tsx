@@ -47,7 +47,7 @@ export default function CrearPenaPage() {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!val || val.length < 2) { setPobResults([]); setPobOpen(false); return; }
     debounceRef.current = setTimeout(async () => {
-      const results = await buscarMunicipios(val);
+      const results = await buscarMunicipios(val, provincia || undefined);
       setPobResults(results);
       setPobOpen(results.length > 0);
     }, 200);
@@ -74,7 +74,7 @@ export default function CrearPenaPage() {
         <div>
           <label className="block text-sm font-bold mb-1.5">Nombre de la peña</label>
           <input type="text" value={nombre}
-            onChange={(e) => { setNombre(e.target.value); setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")); }}
+            onChange={(e) => { setNombre(e.target.value); setSlug(e.target.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")); }}
             className="w-full px-4 py-2.5 bg-[var(--bg-surface)] border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] font-medium focus:outline-none focus:border-[var(--color-primary)] focus:shadow-brutalist transition-all"
             placeholder="Peña Los Amigos" required />
         </div>
@@ -82,7 +82,7 @@ export default function CrearPenaPage() {
         <div>
           <label className="block text-sm font-bold mb-1.5">Identificador único</label>
           <input type="text" value={slug}
-            onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""))}
+            onChange={(e) => setSlug(e.target.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""))}
             className="w-full px-4 py-2.5 bg-[var(--bg-surface)] border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] font-medium focus:outline-none focus:border-[var(--color-primary)] focus:shadow-brutalist transition-all"
             placeholder="pena-los-amigos" required />
         </div>

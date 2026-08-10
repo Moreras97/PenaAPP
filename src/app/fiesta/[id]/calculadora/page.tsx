@@ -10,12 +10,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Modal } from "@/components/ui/modal";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Trash2, Edit, Download, Copy, FileText } from "lucide-react";
+import { Plus, Trash2, Edit, Download, Copy, FileText, Zap } from "lucide-react";
 import type { ProductoCatalogo, Fiesta, Asistencia } from "@/types/database";
 import { jsPDF } from "jspdf";
 
+function getConsumo(pena: any): Record<string, number> {
+  return {
+    cerveza: pena?.consumo_cerveza ?? 1.0,
+    tinto: pena?.consumo_tinto ?? 0.375,
+    cubata: pena?.consumo_cubata ?? 0.35,
+    refresco: pena?.consumo_refresco ?? 1.5,
+    agua: pena?.consumo_agua ?? 1.0,
+    hielo: pena?.consumo_hielo ?? 0.5,
+  };
+}
+
 export default function CalculadoraPage() {
-  const { activePena: pena, activeUserPena: userPena } = usePena();
+  const { activePena: pena, activeUserPena: userPena, refreshKey } = usePena();
   const params = useParams<{ id: string }>();
   const fiestaCalc = params.id;
   const supabase = createClient();
@@ -45,7 +56,7 @@ export default function CalculadoraPage() {
     supabase.from("asistencias").select("id").eq("fiesta_id", fiestaCalc).then(({ data }) => {
       setTotalPersonas(data?.length || 0);
     });
-  }, [supabase, pena, fiestaCalc]);
+  }, [supabase, pena, fiestaCalc, refreshKey]);
 
   const handleSaveProducto = async () => {
     if (!supabase || !pena) return;
@@ -67,6 +78,65 @@ export default function CalculadoraPage() {
     await supabase.from("productos_catalogo").delete().eq("id", id);
     toast.success("Producto eliminado");
     loadProductos();
+  };
+
+  const autoFillFromAttendance = async () => {
+    if (!supabase || !pena) { toast.error("Sin conexion"); return; }
+    const { data: asistencias } = await supabase
+      .from("asistencias")
+      .select("*, asistencia_dias(*)")
+      .eq("fiesta_id", fiestaCalc);
+    if (!asistencias?.length) { toast.error("No hay asistentes registrados"); return; }
+
+    const { data: dias } = await supabase
+      .from("dias_fiesta")
+      .select("id")
+      .eq("fiesta_id", fiestaCalc);
+
+    const totalDias = dias?.length || 1;
+    let cervezaDias = 0, tintoDias = 0, refrescoDias = 0, aguaDias = 0, hieloDias = 0;
+    const cubataDias: Record<string, number> = {};
+
+    for (const a of asistencias as any[]) {
+      const diasAsiste = a.tipo === "semana_completa" ? totalDias : (a.asistencia_dias?.length || 0);
+      hieloDias += diasAsiste;
+      if (a.bebida === "cerveza") cervezaDias += diasAsiste;
+      else if (a.bebida === "tinto") tintoDias += diasAsiste;
+      else if (a.bebida === "cubatas" && a.marca_alcohol) {
+        cubataDias[a.marca_alcohol] = (cubataDias[a.marca_alcohol] || 0) + diasAsiste;
+      }
+      if (a.bebida !== "nada") { refrescoDias += diasAsiste; aguaDias += diasAsiste; }
+    }
+
+    const c = getConsumo(pena);
+    const newSeleccionados: Record<string, number> = {};
+
+    for (const prod of productos) {
+      const name = prod.nombre.toLowerCase();
+      const cat = (prod.categoria || "").toLowerCase();
+
+      if (cervezaDias > 0 && (name.includes("cerveza") || name.includes("lata"))) {
+        newSeleccionados[prod.id] = Math.ceil(cervezaDias * c.cerveza / 0.33);
+      } else if (tintoDias > 0 && (name.includes("tinto") || name.includes("vino"))) {
+        newSeleccionados[prod.id] = Math.ceil(tintoDias * c.tinto / 0.75);
+      } else if (refrescoDias > 0 && (name.includes("cola") || name.includes("refresco") || name.includes("fanta") || name.includes("sprite") || cat === "refresco")) {
+        newSeleccionados[prod.id] = Math.ceil(refrescoDias * c.refresco / 2.0);
+      } else if (aguaDias > 0 && name.includes("agua")) {
+        newSeleccionados[prod.id] = Math.ceil(aguaDias * c.agua / 1.5);
+      } else if (hieloDias > 0 && (name.includes("hielo") || cat === "hielo")) {
+        newSeleccionados[prod.id] = Math.ceil(hieloDias * c.hielo / 2.0);
+      }
+
+      for (const [marca, pDias] of Object.entries(cubataDias)) {
+        if (name.toLowerCase().includes(marca.toLowerCase())) {
+          newSeleccionados[prod.id] = Math.ceil(pDias * c.cubata / 0.7);
+        }
+      }
+    }
+
+    setSeleccionados(newSeleccionados);
+    const total = Object.keys(newSeleccionados).length;
+    toast.success(total > 0 ? "Cantidades estimadas desde " + (asistencias.length) + " asistentes" : "No se encontraron productos compatibles en el catalogo");
   };
 
   const subtotal = Object.entries(seleccionados).reduce((sum, [pid, cant]) => {
@@ -124,7 +194,10 @@ export default function CalculadoraPage() {
             <CardContent className="pt-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Catálogo de productos</h2>
-                {isAdmin && <Button size="sm" onClick={() => { setEditProducto(null); setForm({ nombre: "", categoria: "", precio_estimado: "", unidad: "ud" }); setShowProductoModal(true); }}><Plus className="w-3.5 h-3.5 mr-1" /> Añadir</Button>}
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={autoFillFromAttendance} title="Auto-rellenar cantidades desde asistencia"><Zap className="w-3.5 h-3.5 mr-1" /> Auto-rellenar</Button>
+                  {isAdmin && <Button size="sm" onClick={() => { setEditProducto(null); setForm({ nombre: "", categoria: "", precio_estimado: "", unidad: "ud" }); setShowProductoModal(true); }}><Plus className="w-3.5 h-3.5 mr-1" /> Añadir</Button>}
+                </div>
               </div>
               <div className="space-y-2">
                 {productos.map(p => (

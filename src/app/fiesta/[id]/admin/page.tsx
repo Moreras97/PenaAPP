@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { toast } from "sonner";
 import { Plus, Trash2, Edit, Upload, Check, X, Crown, Shield, User, UserPlus } from "lucide-react";
-import { adminDeleteFiesta, adminSaveFiesta, adminAddDia, adminChangeRole, adminToggleApproval, adminApproveOrReject, adminUploadEscudo, adminSaveTheme } from "./actions";
+import { adminDeleteFiesta, adminSaveFiesta, adminAddDia, adminChangeRole, adminToggleApproval, adminApproveOrReject, adminUploadEscudo, adminSaveTheme, adminSaveConsumo } from "./actions";
 import type { Fiesta, UserPena } from "@/types/database";
 
 interface PendingMember {
@@ -21,7 +21,7 @@ interface PendingMember {
 export default function AdminPage() {
   const { activePena: pena, activeUserPena: userPena, refresh } = usePena();
   const supabase = createClient();
-  const [tab, setTab] = useState<"fiestas" | "miembros" | "aprobaciones" | "theming">("fiestas");
+  const [tab, setTab] = useState<"fiestas" | "miembros" | "aprobaciones" | "theming" | "consumo">("fiestas");
   const [fiestas, setFiestas] = useState<Fiesta[]>([]);
   const [miembros, setMiembros] = useState<UserPena[]>([]);
   const [pendingMembers, setPendingMembers] = useState<PendingMember[]>([]);
@@ -36,6 +36,7 @@ export default function AdminPage() {
   const [diaFiestaId, setDiaFiestaId] = useState("");
   const [diaForm, setDiaForm] = useState({ fecha: "", nombre: "" });
   const [themeForm, setThemeForm] = useState({ color_primary: "#E8635A", color_secondary: "#7B6CF6" });
+  const [consumoForm, setConsumoForm] = useState({ consumo_cerveza: 1.0, consumo_tinto: 0.375, consumo_cubata: 0.35, consumo_refresco: 1.5, consumo_agua: 1.0, consumo_hielo: 0.5 });
   const [escudoFile, setEscudoFile] = useState<File | null>(null);
   const [escudoPreview, setEscudoPreview] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -56,6 +57,15 @@ export default function AdminPage() {
       setRequiresApproval(!!(pena as any).requires_approval);
       setThemeForm({ color_primary: pena.color_primary, color_secondary: pena.color_secondary });
       setEscudoPreview(pena.escudo_url);
+      const p = pena as any;
+      setConsumoForm({
+        consumo_cerveza: p.consumo_cerveza ?? 1.0,
+        consumo_tinto: p.consumo_tinto ?? 0.375,
+        consumo_cubata: p.consumo_cubata ?? 0.35,
+        consumo_refresco: p.consumo_refresco ?? 1.5,
+        consumo_agua: p.consumo_agua ?? 1.0,
+        consumo_hielo: p.consumo_hielo ?? 0.5,
+      });
     }
     setLoading(false);
   }, [supabase, pena, isAdmin]);
@@ -142,6 +152,13 @@ export default function AdminPage() {
     toast.success("Colores actualizados"); refresh();
   };
 
+  const handleSaveConsumo = async () => {
+    if (!pena) return;
+    const r = await adminSaveConsumo(pena.id, consumoForm);
+    if (r.error) { toast.error(r.error); return; }
+    toast.success("Factores de consumo actualizados"); refresh();
+  };
+
   if (loading) return <div className="p-8 text-center">Cargando...</div>;
 
   const tabs = [
@@ -149,6 +166,7 @@ export default function AdminPage() {
     { key: "miembros" as const, label: "Miembros" },
     ...(isAdmin ? [{ key: "aprobaciones" as const, label: "Aprobaciones" + (pendingMembers.length > 0 ? " (" + pendingMembers.length + ")" : "") }] : []),
     { key: "theming" as const, label: "Tematización" },
+    { key: "consumo" as const, label: "Consumo" },
   ];
 
   return (
@@ -293,6 +311,92 @@ export default function AdminPage() {
                   ) : null;
                 })()}
                 <Button onClick={handleSaveTheme} className="w-full">Guardar colores</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {tab === "consumo" && (
+        <div className="max-w-md">
+          <Card>
+            <CardContent className="pt-4">
+              <h2 className="text-lg font-bold mb-4">Factores de consumo por persona y dia</h2>
+              <p className="text-sm mb-4">Estos valores se usan en la lista de la compra para estimar cantidades. Ajustalos segun tu peña.</p>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-bold block mb-1">Cerveza (L/persona/dia)</label>
+                  <div className="flex items-center gap-2">
+                    <input type="range" min="0.1" max="3" step="0.1" value={consumoForm.consumo_cerveza}
+                      onChange={e => setConsumoForm({ ...consumoForm, consumo_cerveza: parseFloat(e.target.value) })}
+                      className="flex-1" />
+                    <input type="number" min="0.1" max="3" step="0.1" value={consumoForm.consumo_cerveza}
+                      onChange={e => setConsumoForm({ ...consumoForm, consumo_cerveza: parseFloat(e.target.value) || 0 })}
+                      className="w-16 border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-2 py-1 text-sm text-center" />
+                    <span className="text-xs w-10">L/dia</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-bold block mb-1">Tinto (L/persona/dia)</label>
+                  <div className="flex items-center gap-2">
+                    <input type="range" min="0.1" max="2" step="0.05" value={consumoForm.consumo_tinto}
+                      onChange={e => setConsumoForm({ ...consumoForm, consumo_tinto: parseFloat(e.target.value) })}
+                      className="flex-1" />
+                    <input type="number" min="0.1" max="2" step="0.05" value={consumoForm.consumo_tinto}
+                      onChange={e => setConsumoForm({ ...consumoForm, consumo_tinto: parseFloat(e.target.value) || 0 })}
+                      className="w-16 border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-2 py-1 text-sm text-center" />
+                    <span className="text-xs w-10">L/dia</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-bold block mb-1">Cubatas (L/persona/dia) — 35cl = media botella</label>
+                  <div className="flex items-center gap-2">
+                    <input type="range" min="0.1" max="1" step="0.05" value={consumoForm.consumo_cubata}
+                      onChange={e => setConsumoForm({ ...consumoForm, consumo_cubata: parseFloat(e.target.value) })}
+                      className="flex-1" />
+                    <input type="number" min="0.1" max="1" step="0.05" value={consumoForm.consumo_cubata}
+                      onChange={e => setConsumoForm({ ...consumoForm, consumo_cubata: parseFloat(e.target.value) || 0 })}
+                      className="w-16 border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-2 py-1 text-sm text-center" />
+                    <span className="text-xs w-10">L/dia</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-bold block mb-1">Refresco (L/persona/dia)</label>
+                  <div className="flex items-center gap-2">
+                    <input type="range" min="0.5" max="4" step="0.1" value={consumoForm.consumo_refresco}
+                      onChange={e => setConsumoForm({ ...consumoForm, consumo_refresco: parseFloat(e.target.value) })}
+                      className="flex-1" />
+                    <input type="number" min="0.5" max="4" step="0.1" value={consumoForm.consumo_refresco}
+                      onChange={e => setConsumoForm({ ...consumoForm, consumo_refresco: parseFloat(e.target.value) || 0 })}
+                      className="w-16 border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-2 py-1 text-sm text-center" />
+                    <span className="text-xs w-10">L/dia</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-bold block mb-1">Agua (L/persona/dia)</label>
+                  <div className="flex items-center gap-2">
+                    <input type="range" min="0.5" max="3" step="0.1" value={consumoForm.consumo_agua}
+                      onChange={e => setConsumoForm({ ...consumoForm, consumo_agua: parseFloat(e.target.value) })}
+                      className="flex-1" />
+                    <input type="number" min="0.5" max="3" step="0.1" value={consumoForm.consumo_agua}
+                      onChange={e => setConsumoForm({ ...consumoForm, consumo_agua: parseFloat(e.target.value) || 0 })}
+                      className="w-16 border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-2 py-1 text-sm text-center" />
+                    <span className="text-xs w-10">L/dia</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-bold block mb-1">Hielo (kg/persona/dia)</label>
+                  <div className="flex items-center gap-2">
+                    <input type="range" min="0.1" max="2" step="0.1" value={consumoForm.consumo_hielo}
+                      onChange={e => setConsumoForm({ ...consumoForm, consumo_hielo: parseFloat(e.target.value) })}
+                      className="flex-1" />
+                    <input type="number" min="0.1" max="2" step="0.1" value={consumoForm.consumo_hielo}
+                      onChange={e => setConsumoForm({ ...consumoForm, consumo_hielo: parseFloat(e.target.value) || 0 })}
+                      className="w-16 border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-2 py-1 text-sm text-center" />
+                    <span className="text-xs w-10">kg/dia</span>
+                  </div>
+                </div>
+                <Button onClick={handleSaveConsumo} className="w-full">Guardar factores</Button>
               </div>
             </CardContent>
           </Card>

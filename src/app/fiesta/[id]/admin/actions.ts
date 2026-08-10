@@ -150,3 +150,15 @@ export async function adminSaveTheme(penaId: string, color_primary: string, colo
   if (error) return { error: error.message };
   return { success: true };
 }
+
+export async function adminSaveConsumo(penaId: string, factores: { consumo_cerveza: number; consumo_tinto: number; consumo_cubata: number; consumo_refresco: number; consumo_agua: number; consumo_hielo: number }) {
+  const supabase = await getAuthClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "No autenticado" };
+
+  const admin = getAdminClient();
+  const { error } = await admin.from("penas").update(factores as any).eq("id", penaId);
+  if (error) return { error: error.message };
+  revalidatePath("/", "layout");
+  return { success: true };
+}

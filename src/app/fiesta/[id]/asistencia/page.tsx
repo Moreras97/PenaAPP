@@ -34,7 +34,7 @@ const MARCAS: Record<TipoAlcohol, string[]> = {
 const MEZCLAS = ["Coca-Cola", "Coca-Cola Zero", "Fanta Naranja", "Fanta Limón", "Tónica", "Sprite", "Seven Up", "Nestea", "Red Bull", "Agua con gas"];
 
 export default function AsistenciaPage() {
-  const { activePena: pena, activeUserPena: userPena } = usePena();
+  const { activePena: pena, activeUserPena: userPena, triggerRefresh } = usePena();
   const router = useRouter(); const params = useParams<{ id: string }>();
   const fiestaId = params.id;
   const supabase = createClient();
@@ -171,6 +171,7 @@ export default function AsistenciaPage() {
     if (r.error) { toast.error(r.error); return; }
     toast.success("Asistencia guardada");
     loadData();
+    triggerRefresh();
   };
 
   const handleDelete = async () => {
@@ -181,6 +182,7 @@ export default function AsistenciaPage() {
     setDiasSeleccionados([]);
     toast.success("Inscripción cancelada");
     loadData();
+    triggerRefresh();
   };
 
   return (
