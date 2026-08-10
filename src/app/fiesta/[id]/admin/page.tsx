@@ -19,7 +19,7 @@ interface PendingMember {
 }
 
 export default function AdminPage() {
-  const { activePena: pena, activeUserPena: userPena, refresh } = usePena();
+  const { activePena: pena, activeUserPena: userPena, refresh, triggerRefresh } = usePena();
   const supabase = createClient();
   const [tab, setTab] = useState<"fiestas" | "miembros" | "aprobaciones" | "theming" | "consumo">("fiestas");
   const [fiestas, setFiestas] = useState<Fiesta[]>([]);
@@ -85,6 +85,7 @@ export default function AdminPage() {
     toast.success(editFiesta ? "Fiesta actualizada" : "Fiesta creada");
     setShowFiestaModal(false); setEditFiesta(null); setFiestaForm({ nombre: "", fecha_inicio: "", fecha_fin: "", max_dias_sueltos: null, locked: false });
     loadData();
+    triggerRefresh();
   };
 
   const handleDeleteFiestaRequest = (id: string) => {
@@ -100,6 +101,7 @@ export default function AdminPage() {
     toast.success("Fiesta eliminada");
     setShowDeleteModal(false);
     loadData();
+    triggerRefresh();
   };
 
   const handleAddDia = async () => {

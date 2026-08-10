@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { buscarPenaPorSlug, unirseAPena } from "./actions";
+import { usePena } from "@/context/PenaContext";
 
 export default function UnirsePenaPage() {
   const [slug, setSlug] = useState("");
@@ -13,6 +14,7 @@ export default function UnirsePenaPage() {
   const [apodo, setApodo] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { refresh } = usePena();
   const supabase = createClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,6 +43,7 @@ export default function UnirsePenaPage() {
     } else {
       toast.success("Te has unido a la pena");
     }
+    refresh();
     router.push("/");
   };
 

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { crearPena } from "./actions";
 import { buscarMunicipios } from "@/data/municipios";
+import { usePena } from "@/context/PenaContext";
 import { MapPin } from "lucide-react";
 
 const PROVINCIAS = [
@@ -29,6 +30,7 @@ export default function CrearPenaPage() {
   const [provOpen, setProvOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { refresh } = usePena();
   const pobRef = useRef<HTMLDivElement>(null);
   const provRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -63,6 +65,7 @@ export default function CrearPenaPage() {
     const result = await crearPena(nombre, slug, provincia, poblacion);
     if ((result as any).error) { toast.error((result as any).error); setLoading(false); return; }
     toast.success("Peña creada correctamente");
+    refresh();
     router.push("/");
   };
 

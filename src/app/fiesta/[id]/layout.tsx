@@ -21,7 +21,7 @@ const navItems = [
 ];
 
 export default function FiestaLayout({ children }: { children: React.ReactNode }) {
-  const { activePena, memberships, switchPena, loading } = usePena();
+  const { activePena, memberships, switchPena, loading, refreshKey } = usePena();
   const pathname = usePathname();
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -64,7 +64,7 @@ export default function FiestaLayout({ children }: { children: React.ReactNode }
     const supabase = createClient();
     if (!supabase) return;
     supabase.from("fiestas").select("id,nombre,fecha_inicio,fecha_fin").eq("pena_id", activePena.id).order("fecha_inicio", { ascending: false }).then(({ data }) => setFiestas(data || []));
-  }, [activePena]);
+  }, [activePena, refreshKey]);
 
   if (loading) {
     return (
