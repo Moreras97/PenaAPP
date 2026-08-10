@@ -137,8 +137,8 @@ export default function ListaCompraPage() {
     for (const [marca, data] of Object.entries(cubatasPorMarca)) {
       if (data.personaDias === 0) continue;
       const prod = productos.find(p => p.nombre === marca);
-            const ref = prod ? { precio: prod.precio_referencia || prod.precio_estimado, litros: prod.litros_por_unidad || 0.7, categoria: prod.categoria } : null;
-      if (!ref || !ref.precio) continue;
+            const ref = prod ? { precio: prod.precio_referencia || prod.precio_estimado || 0, litros: prod.litros_por_unidad || 0.7, categoria: prod.categoria } : null;
+      if (!ref) continue;
       const litrosNecesarios = data.personaDias * consumo.cubata;
       const botellas = Math.ceil(litrosNecesarios / ref.litros);
       const coste = botellas * ref.precio;
