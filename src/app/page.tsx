@@ -14,10 +14,10 @@ import { cn } from "@/lib/utils";
 function PenaSelector({ memberships, activePena, switchPena }: { memberships: any[]; activePena: any; switchPena: (id: string) => void }) {
   if (memberships.length <= 1) return null;
   return (
-    <div className="max-w-2xl mx-auto px-4 mb-4">
+    <div className="max-w-2xl mx-auto px-4 mt-4 mb-4">
       <div className="flex items-center gap-2 mb-2">
         <Users className="w-4 h-4 opacity-50" />
-        <span className="text-xs font-bold opacity-50 lowercase">{memberships.length} peñas</span>
+        <span className="text-xs font-bold opacity-70 lowercase">{memberships.length} peñas</span>
       </div>
       <div className="flex flex-wrap gap-2">
         {memberships.map((m) => {
@@ -95,7 +95,7 @@ export default function HomePage() {
           </div>
         </nav>
         <PenaSelector memberships={memberships} activePena={activePena} switchPena={switchPena} />
-        <main className="max-w-lg mx-auto px-4 pt-12 text-center space-y-6">
+        <main className="max-w-lg mx-auto px-4 pt-6 text-center space-y-6">
           <CalendarDays className="w-16 h-16 mx-auto opacity-30" />
           <h2 className="text-2xl font-extrabold lowercase">no hay fiestas todavía</h2>
           <p className="text-[var(--text-secondary)]">el administrador debe crear la primera fiesta</p>
@@ -134,7 +134,7 @@ export default function HomePage() {
 
       <PenaSelector memberships={memberships} activePena={activePena} switchPena={switchPena} />
 
-      <main className="max-w-2xl mx-auto px-4 pt-4 pb-8">
+      <main className="max-w-2xl mx-auto px-4 pt-2 pb-8">
         <div className="flex items-center gap-3 mb-6">
           <CalendarDays className="w-6 h-6" />
           <h2 className="text-xl font-extrabold lowercase">fiestas de {activePena.nombre}</h2>
