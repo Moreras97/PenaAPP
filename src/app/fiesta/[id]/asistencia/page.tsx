@@ -58,9 +58,8 @@ export default function AsistenciaPage() {
     setLoading(true);
     setDebug("cargando...");
 
-    // try
-    const res = await fetch("/api/asistencia?fiestaId=" + fiestaId);
-      if (!res.ok) { setDebug("API error: " + res.status); setLoading(false); return; }
+    const res = await fetch("/api/asistencia?fiestaId=" + fiestaId + "&_t=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) { setDebug("API error: " + res.status); setLoading(false); return; }
       const json = await res.json();
       const { fiesta, asistencias, dias } = json;
       setDebug("OK: fiesta=" + (fiesta?.nombre||"?") + ", asistencias=" + (asistencias?.length||0) + ", dias=" + (dias?.length||0));
@@ -170,7 +169,7 @@ export default function AsistenciaPage() {
     });
     if (r.error) { toast.error(r.error); return; }
     toast.success("Asistencia guardada");
-    loadData();
+    await loadData();
     triggerRefresh();
   };
 
@@ -181,7 +180,7 @@ export default function AsistenciaPage() {
     setMiAsistencia(null);
     setDiasSeleccionados([]);
     toast.success("Inscripción cancelada");
-    loadData();
+    await loadData();
     triggerRefresh();
   };
 
