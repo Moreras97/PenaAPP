@@ -188,7 +188,7 @@ export default function CalculadoraPage() {
 
   return (
     <div>
-      <PageHeader title="Calculadora" description="Estima el presupuesto del bote para las fiestas" />
+      <PageHeader title="Presupuesto" description="Calcula cuánto se gasta y cuánto toca poner por persona" />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>

@@ -5,7 +5,7 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        "bg-[var(--bg-surface)] border-brutalist shadow-brutalist p-6 rounded-[var(--radius-lg)]",
+        "bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-[var(--radius-lg)] p-5 shadow-[var(--shadow-sm)]",
         className
       )}
       {...props}
@@ -14,9 +14,7 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
 }
 
 export function CardHeader({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div className={cn("pb-4 mb-4 border-b-2 border-[var(--border-color)]", className)} {...props} />
-  );
+  return <div className={cn("pb-3 mb-3 border-b border-[var(--border-color)]", className)} {...props} />;
 }
 
 export function CardContent({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
@@ -27,7 +25,7 @@ export function CardFlat({ className, ...props }: HTMLAttributes<HTMLDivElement>
   return (
     <div
       className={cn(
-        "bg-[var(--bg-surface)] border-brutalist rounded-[var(--radius-lg)] p-6",
+        "bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-[var(--radius-lg)] p-5",
         className
       )}
       {...props}

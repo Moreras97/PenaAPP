@@ -8,6 +8,7 @@ import { crearPena } from "./actions";
 import { buscarMunicipios } from "@/data/municipios";
 import { usePena } from "@/context/PenaContext";
 import { MapPin } from "lucide-react";
+import Link from "next/link";
 
 const PROVINCIAS = [
   "A Coruña","Álava","Albacete","Alicante","Almería","Asturias","Ávila","Badajoz",
@@ -70,74 +71,83 @@ export default function CrearPenaPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-[var(--bg-page)]">
-      <form onSubmit={handleSubmit} className="max-w-md w-full bg-[var(--bg-surface)] border-brutalist shadow-brutalist-lg rounded-[var(--radius-lg)] p-8 space-y-5">
-        <h1 className="text-2xl font-extrabold text-center">Crear una peña</h1>
-
-        <div>
-          <label className="block text-sm font-bold mb-1.5">Nombre de la peña</label>
-          <input type="text" value={nombre}
-            onChange={(e) => { setNombre(e.target.value); setSlug(e.target.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")); }}
-            className="w-full px-4 py-2.5 bg-[var(--bg-surface)] border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] font-medium focus:outline-none focus:border-[var(--color-primary)] focus:shadow-brutalist transition-all"
-            placeholder="Peña Los Amigos" required />
+    <div className="min-h-screen bg-[var(--bg-page)]">
+      <header className="bg-[var(--bg-surface)] border-b border-[var(--border-color)]">
+        <div className="max-w-2xl mx-auto px-4 h-16 flex items-center justify-between">
+          <Link href="/" className="font-bold text-lg">Peña App</Link>
+          <Link href="/pena/unirse" className="text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)]">¿Ya tienes un ID? Únete</Link>
         </div>
+      </header>
+      <main className="max-w-md mx-auto px-4 py-10">
+        <h1 className="text-2xl font-bold text-center mb-2">Crear una peña</h1>
+        <p className="text-sm text-center mb-8">Crea el grupo para organizar las fiestas de tu cuadrilla o pueblo.</p>
+        <form onSubmit={handleSubmit} className="bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-[var(--radius-lg)] shadow-[var(--shadow-md)] p-6 space-y-5">
+          <div>
+            <label className="block text-sm font-semibold mb-1.5">Nombre de la peña</label>
+            <input type="text" value={nombre}
+              onChange={(e) => { setNombre(e.target.value); setSlug(e.target.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")); }}
+              className="w-full"
+              placeholder="Peña Los Amigos" required />
+          </div>
 
-        <div>
-          <label className="block text-sm font-bold mb-1.5">Identificador único</label>
-          <input type="text" value={slug}
-            onChange={(e) => setSlug(e.target.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""))}
-            className="w-full px-4 py-2.5 bg-[var(--bg-surface)] border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] font-medium focus:outline-none focus:border-[var(--color-primary)] focus:shadow-brutalist transition-all"
-            placeholder="pena-los-amigos" required />
-        </div>
+          <div>
+            <label className="block text-sm font-semibold mb-1.5">Identificador (para compartir)</label>
+            <input type="text" value={slug}
+              onChange={(e) => setSlug(e.target.value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, ""))}
+              className="w-full"
+              placeholder="pena-los-amigos" required />
+            <p className="text-xs mt-1.5 text-[var(--text-secondary)]">Con este ID tus amigos podrán encontrar la peña y unirse.</p>
+          </div>
 
-        <div ref={provRef} className="relative">
-          <label className="block text-sm font-bold mb-1.5"><MapPin className="w-3.5 h-3.5 inline mr-1" />Provincia</label>
-          <input type="text" value={provincia}
-            onChange={(e) => { setProvincia(e.target.value); setProvOpen(true); }}
-            onFocus={() => setProvOpen(true)}
-            className="w-full px-4 py-2.5 bg-[var(--bg-surface)] border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] font-medium focus:outline-none focus:border-[var(--color-primary)] focus:shadow-brutalist transition-all"
-            placeholder="Buscar provincia..." />
-          {provOpen && filteredProvincias.length > 0 && (
-            <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-[var(--bg-surface)] border-brutalist shadow-brutalist rounded-[var(--radius-md)] max-h-48 overflow-auto">
-              {filteredProvincias.map(p => (
-                <button key={p} type="button"
-                  onClick={() => { setProvincia(p); setProvOpen(false); }}
-                  className="w-full text-left px-3 py-2 text-sm font-medium hover:bg-[var(--bg-page)] transition">
-                  {p}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+          <div ref={provRef} className="relative">
+            <label className="block text-sm font-semibold mb-1.5"><MapPin className="w-3.5 h-3.5 inline mr-1" />Provincia</label>
+            <input type="text" value={provincia}
+              onChange={(e) => { setProvincia(e.target.value); setProvOpen(true); }}
+              onFocus={() => setProvOpen(true)}
+              className="w-full"
+              placeholder="Buscar provincia..." />
+            {provOpen && filteredProvincias.length > 0 && (
+              <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-[var(--bg-surface)] border border-[var(--border-color)] shadow-[var(--shadow-lg)] rounded-[var(--radius-md)] max-h-48 overflow-auto">
+                {filteredProvincias.map(p => (
+                  <button key={p} type="button"
+                    onClick={() => { setProvincia(p); setProvOpen(false); }}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--bg-page)]">
+                    {p}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-        <div ref={pobRef} className="relative">
-          <label className="block text-sm font-bold mb-1.5"><MapPin className="w-3.5 h-3.5 inline mr-1" />Población</label>
-          <input type="text" value={poblacion}
-            onChange={(e) => handlePobChange(e.target.value)}
-            onFocus={() => { if (pobResults.length > 0) setPobOpen(true); }}
-            className="w-full px-4 py-2.5 bg-[var(--bg-surface)] border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] font-medium focus:outline-none focus:border-[var(--color-primary)] focus:shadow-brutalist transition-all"
-            placeholder="Escribe el nombre de tu pueblo o ciudad..." autoComplete="off" />
-          {pobOpen && pobResults.length > 0 && (
-            <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-[var(--bg-surface)] border-brutalist shadow-brutalist rounded-[var(--radius-md)] max-h-48 overflow-auto">
-              {pobResults.map(r => (
-                <button key={r.nombre + r.provincia} type="button"
-                  onClick={() => { setPoblacion(r.nombre); setProvincia(r.provincia); setPobOpen(false); }}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--bg-page)] transition">
-                  <span className="font-medium">{r.nombre}</span>
-                  <span className="text-xs opacity-50 ml-2">({r.provincia})</span>
-                </button>
-              ))}
-            </div>
-          )}
-          {poblacion && pobResults.length === 0 && (
-            <p className="text-xs text-[var(--text-secondary)] mt-1">Escribe al menos 2 letras para buscar</p>
-          )}
-        </div>
+          <div ref={pobRef} className="relative">
+            <label className="block text-sm font-semibold mb-1.5"><MapPin className="w-3.5 h-3.5 inline mr-1" />Población</label>
+            <input type="text" value={poblacion}
+              onChange={(e) => handlePobChange(e.target.value)}
+              onFocus={() => { if (pobResults.length > 0) setPobOpen(true); }}
+              className="w-full"
+              placeholder="Escribe tu pueblo o ciudad..." autoComplete="off" />
+            {pobOpen && pobResults.length > 0 && (
+              <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-[var(--bg-surface)] border border-[var(--border-color)] shadow-[var(--shadow-lg)] rounded-[var(--radius-md)] max-h-48 overflow-auto">
+                {pobResults.map(r => (
+                  <button key={r.nombre + r.provincia} type="button"
+                    onClick={() => { setPoblacion(r.nombre); setProvincia(r.provincia); setPobOpen(false); }}
+                    className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--bg-page)]">
+                    <span className="font-medium">{r.nombre}</span>
+                    <span className="text-xs opacity-50 ml-2">({r.provincia})</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {poblacion && pobResults.length === 0 && (
+              <p className="text-xs text-[var(--text-secondary)] mt-1">Escribe al menos 2 letras para buscar</p>
+            )}
+          </div>
 
-        <Button type="submit" disabled={loading} className="w-full" size="lg">
-          {loading ? "Creando..." : "Crear peña"}
-        </Button>
-      </form>
+          <Button type="submit" disabled={loading} className="w-full" size="lg">
+            {loading ? "Creando..." : "Crear peña"}
+          </Button>
+        </form>
+      </main>
     </div>
   );
 }

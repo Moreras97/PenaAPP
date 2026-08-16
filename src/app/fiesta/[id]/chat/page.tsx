@@ -59,7 +59,7 @@ export default function ChatPage() {
 
   return (
     <div>
-      <PageHeader title="Chat" description="Chat en tiempo real de la peña" />
+      <PageHeader title="Charlar" description="Hablemos de la fiesta entre todos" />
       <Card>
         <CardContent className="pt-4">
           <div className="h-[60vh] overflow-y-auto space-y-3 mb-4 pr-2">

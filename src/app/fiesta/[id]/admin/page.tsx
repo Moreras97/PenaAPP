@@ -75,7 +75,12 @@ export default function AdminPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  if (!isAdmin && userPena) return <div className="p-8 text-center">Acceso restringido. Solo administradores.</div>;
+  if (!isAdmin && userPena?.rol !== "mod") return (
+    <div className="py-12 text-center">
+      <p className="text-lg font-bold">No tienes acceso</p>
+      <p className="text-sm mt-1">Solo los administradores y moderadores pueden ver esta sección.</p>
+    </div>
+  );
 
   const handleSaveFiesta = async () => {
     if (!pena) return;
@@ -199,11 +204,11 @@ export default function AdminPage() {
 
   return (
     <div>
-      <PageHeader title="Administración" description="Gestiona tu peña" />
+      <PageHeader title="Configuración" description="Crea fiestas, gestiona miembros y personaliza tu peña" />
       <div className="flex gap-2 mb-6 flex-wrap">
         {tabs.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={"px-4 py-2 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down transition " + (tab === t.key ? "bg-[var(--color-primary)] text-white" : "bg-[var(--bg-page)]")}>
+            className={"px-4 py-2 text-sm font-semibold rounded-[var(--radius-md)] border transition-colors " + (tab === t.key ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]" : "bg-[var(--bg-surface)] border-[var(--border-color)] hover:bg-[var(--bg-page)]")}>
             {t.label}
           </button>
         ))}

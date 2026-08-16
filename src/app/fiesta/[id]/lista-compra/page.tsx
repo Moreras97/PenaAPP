@@ -270,7 +270,7 @@ export default function ListaCompraPage() {
 
   return (
     <div>
-      <PageHeader title="Lista de compra" description="Generada automáticamente desde los registros de asistencia" actions={
+      <PageHeader title="La compra" description="Se genera sola con los que vienen y lo que beben" actions={
         <div className="flex gap-2">
           {isAdmin && (
             <Button size="sm" variant="outline" onClick={handleRefreshPrecios} disabled={refreshLoading}>

@@ -192,14 +192,14 @@ export default function AsistenciaPage() {
 
   return (
     <div>
-      <PageHeader title="Asistencia" description="Registra tu asistencia y preferencias de bebida" />
+      <PageHeader title="¿Vengo?" description="Apúntate a la fiesta y di qué vas a beber para preparar la compra" />
 
       {!fiestaActiva ? (
         <div className="text-center py-12 px-4">
           <p className="text-lg font-bold mb-2">Fiesta no encontrada</p>
           <p className="text-sm mb-4">La fiesta solicitada no existe o no pertenece a esta peña.</p>
           <Link href={`/fiesta/${params.id}/admin`}>
-            <Button variant="primary">Crear fiesta</Button>
+            <Button variant="primary">Ir a configuración</Button>
           </Link>
         </div>
       ) : (
@@ -209,47 +209,47 @@ export default function AsistenciaPage() {
               <h2 className="text-lg font-bold mb-4">{fiestaActiva.nombre}</h2>
 
               <div className="mb-5">
-                <label className="block text-sm font-bold mb-2">Tipo de asistencia</label>
-                <div className="flex gap-2">
-                  <button onClick={() => setTipo("semana_completa")}
-                    className={"px-4 py-2 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + (tipo === "semana_completa" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--bg-page)]")}>
-                    Fiestas Completas
+                <label className="block text-sm font-semibold mb-2">¿Cómo vienes?</label>
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" onClick={() => setTipo("semana_completa")}
+                    className={"px-4 py-2 text-sm font-semibold rounded-[var(--radius-md)] border transition-colors " + (tipo === "semana_completa" ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]" : "bg-[var(--bg-page)] border-[var(--border-color)]")}>
+                    Todos los días
                   </button>
-                  <button onClick={() => setTipo("dias_sueltos")} disabled={maxDiasSueltos === 0}
-                    className={"px-4 py-2 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + (tipo === "dias_sueltos" ? "bg-[var(--color-primary)] text-white" : "bg-[var(--bg-page)]") + (maxDiasSueltos === 0 ? " opacity-50 cursor-not-allowed" : "")}>
-                    Dias Sueltos{maxDiasSueltos === 0 ? " (no disponible)" : ""}
+                  <button type="button" onClick={() => setTipo("dias_sueltos")} disabled={maxDiasSueltos === 0}
+                    className={"px-4 py-2 text-sm font-semibold rounded-[var(--radius-md)] border transition-colors " + (tipo === "dias_sueltos" ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]" : "bg-[var(--bg-page)] border-[var(--border-color)]") + (maxDiasSueltos === 0 ? " opacity-50 cursor-not-allowed" : "")}>
+                    Solo algunos días{maxDiasSueltos === 0 ? " (no disponible)" : ""}
                   </button>
                 </div>
                 {maxDiasSueltos > 0 && maxDiasSueltos < 999 && diasSeleccionados.length >= maxDiasSueltos && tipo === "dias_sueltos" && (
-                  <div className="mt-2"><Badge variant="warning">Has llegado al maximo de {maxDiasSueltos} dias sueltos</Badge></div>
+                  <div className="mt-2"><Badge variant="warning">Has llegado al máximo de {maxDiasSueltos} días</Badge></div>
                 )}
               </div>
 
               {tipo === "dias_sueltos" && (
                 <div className="mb-5">
-                  <label className="block text-sm font-bold mb-2">
-                    Días ({diasSeleccionados.length} seleccionados)
+                  <label className="block text-sm font-semibold mb-2">
+                    Elige los días ({diasSeleccionados.length} seleccionados)
                   </label>
                   <div className="flex flex-wrap gap-2">
                     {dias.map(d => (
-                      <button key={d.id} onClick={() => toggleDia(d.id)}
-                        className={"px-3 py-1.5 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + (diasSeleccionados.includes(d.id) ? "bg-[var(--color-primary)] text-white" : "bg-[var(--bg-page)]")}>
+                      <button type="button" key={d.id} onClick={() => toggleDia(d.id)}
+                        className={"px-3 py-1.5 text-sm font-semibold rounded-[var(--radius-md)] border transition-colors " + (diasSeleccionados.includes(d.id) ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]" : "bg-[var(--bg-page)] border-[var(--border-color)]")}>
                         {d.fecha} {d.nombre ? `(${d.nombre})` : ""}
                       </button>
                     ))}
                   </div>
-                  {dias.length === 0 && <p className="text-sm mt-2">El admin no ha añadido días a esta fiesta.</p>}
+                  {dias.length === 0 && <p className="text-sm mt-2">El organizador no ha añadido días a esta fiesta.</p>}
                 </div>
               )}
 
               <div className="mb-5">
-                <label className="block text-sm font-bold mb-2">Bebida</label>
+                <label className="block text-sm font-semibold mb-2">¿Qué vas a beber?</label>
                 <div className="flex flex-wrap gap-2">
                   {(Object.keys(BEBIDA_LABELS) as Bebida[]).map(b => {
                     const Icon = BEBIDA_ICONS[b];
                     return (
-                      <button key={b} onClick={() => setBebida(b)}
-                        className={"px-3 py-1.5 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down flex items-center gap-1.5 " + (bebida === b ? "bg-[var(--color-primary)] text-white" : "bg-[var(--bg-page)]")}>
+                      <button type="button" key={b} onClick={() => setBebida(b)}
+                        className={"px-3 py-1.5 text-sm font-semibold rounded-[var(--radius-md)] border transition-colors flex items-center gap-1.5 " + (bebida === b ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)]" : "bg-[var(--bg-page)] border-[var(--border-color)]")}>
                         <Icon className="w-3.5 h-3.5" /> {BEBIDA_LABELS[b]}
                       </button>
                     );
@@ -258,12 +258,12 @@ export default function AsistenciaPage() {
               </div>
 
               {bebida === "refresco" && (
-                <div className="mb-5 bg-[var(--bg-page)] border-brutalist rounded-[var(--radius-md)] p-4 space-y-3">
-                  <p className="text-sm font-bold">Tipo de refresco</p>
+                <div className="mb-5 bg-[var(--bg-page)] border border-[var(--border-color)] rounded-[var(--radius-md)] p-4 space-y-3">
+                  <p className="text-sm font-semibold">¿Qué refresco?</p>
                   <div className="flex flex-wrap gap-2">
                     {MEZCLAS.map(m => (
-                      <button key={m} onClick={() => setTipoRefresco(m)}
-                        className={"px-3 py-1.5 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + (tipoRefresco === m ? "bg-[var(--color-teal)] text-[var(--text-primary)]" : "bg-[var(--bg-surface)]")}>
+                      <button type="button" key={m} onClick={() => setTipoRefresco(m)}
+                        className={"px-3 py-1.5 text-sm font-semibold rounded-[var(--radius-md)] border transition-colors " + (tipoRefresco === m ? "bg-[var(--color-teal)] text-white border-[var(--color-teal)]" : "bg-[var(--bg-surface)] border-[var(--border-color)]")}>
                         {m.replace(" ", "\u00A0")}
                       </button>
                     ))}
@@ -272,15 +272,15 @@ export default function AsistenciaPage() {
               )}
 
               {bebida === "cubatas" && (
-                <div className="mb-5 bg-[var(--bg-page)] border-brutalist rounded-[var(--radius-md)] p-4 space-y-4">
-                  <p className="text-sm font-bold">Detalles del cubata</p>
+                <div className="mb-5 bg-[var(--bg-page)] border border-[var(--border-color)] rounded-[var(--radius-md)] p-4 space-y-4">
+                  <p className="text-sm font-semibold">Detalles del cubata</p>
 
                   <div>
-                    <label className="block text-sm font-bold mb-1.5">Tipo de alcohol</label>
+                    <label className="block text-sm font-semibold mb-1.5">¿Qué alcohol?</label>
                     <div className="flex flex-wrap gap-2">
                       {(Object.keys(MARCAS) as TipoAlcohol[]).map(t => (
-                        <button key={t} onClick={() => { setTipoAlcohol(t); setMarca(""); }}
-                          className={"px-3 py-1.5 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down capitalize " + (tipoAlcohol === t ? "bg-[var(--color-secondary)] text-white" : "bg-[var(--bg-surface)]")}>
+                        <button type="button" key={t} onClick={() => { setTipoAlcohol(t); setMarca(""); }}
+                          className={"px-3 py-1.5 text-sm font-semibold rounded-[var(--radius-md)] border transition-colors capitalize " + (tipoAlcohol === t ? "bg-[var(--color-secondary)] text-white border-[var(--color-secondary)]" : "bg-[var(--bg-surface)] border-[var(--border-color)]")}>
                           {t}
                         </button>
                       ))}
@@ -288,11 +288,11 @@ export default function AsistenciaPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold mb-1.5">Marca</label>
+                    <label className="block text-sm font-semibold mb-1.5">Marca</label>
                     <div className="flex flex-wrap gap-2">
                       {MARCAS[tipoAlcohol].map(m => (
-                        <button key={m} onClick={() => setMarca(m)}
-                          className={"px-3 py-1.5 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + (marca === m ? "bg-[var(--color-yellow)] text-[var(--text-primary)]" : "bg-[var(--bg-surface)]")}>
+                        <button type="button" key={m} onClick={() => setMarca(m)}
+                          className={"px-3 py-1.5 text-sm font-semibold rounded-[var(--radius-md)] border transition-colors " + (marca === m ? "bg-[var(--color-yellow)] text-[var(--text-primary)] border-[var(--color-yellow)]" : "bg-[var(--bg-surface)] border-[var(--border-color)]")}>
                           {m}
                         </button>
                       ))}
@@ -300,11 +300,11 @@ export default function AsistenciaPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-bold mb-1.5">Mezcla</label>
+                    <label className="block text-sm font-semibold mb-1.5">¿Con qué?</label>
                     <div className="flex flex-wrap gap-2">
                       {MEZCLAS.map(m => (
-                        <button key={m} onClick={() => setMezcla(m)}
-                          className={"px-3 py-1.5 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + (mezcla === m ? "bg-[var(--color-teal)] text-[var(--text-primary)]" : "bg-[var(--bg-surface)]")}>
+                        <button type="button" key={m} onClick={() => setMezcla(m)}
+                          className={"px-3 py-1.5 text-sm font-semibold rounded-[var(--radius-md)] border transition-colors " + (mezcla === m ? "bg-[var(--color-teal)] text-white border-[var(--color-teal)]" : "bg-[var(--bg-surface)] border-[var(--border-color)]")}>
                           {m.replace(" ", "\u00A0")}
                         </button>
                       ))}
@@ -313,9 +313,9 @@ export default function AsistenciaPage() {
                 </div>
               )}
 
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button onClick={handleSave} size="lg">
-                  {miAsistencia ? "Actualizar" : "Guardar"} inscripción
+                  {miAsistencia ? "Actualizar mi inscripción" : "Me apunto"}
                 </Button>
                 {miAsistencia && (
                   <Button variant="danger" size="lg" onClick={handleDelete}>
@@ -328,13 +328,13 @@ export default function AsistenciaPage() {
 
           <Card>
             <CardContent className="pt-6">
-              <h2 className="text-lg font-bold mb-4">Recuento público</h2>
+              <h2 className="text-lg font-bold mb-4">Quién viene</h2>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b-2 border-[var(--border-color)]">
-                      <th className="text-left py-2 font-bold">Dia</th>
-                      <th className="text-center py-2 font-bold">Total</th>
+                    <tr className="border-b border-[var(--border-color)]">
+                      <th className="text-left py-2 font-semibold">Día</th>
+                      <th className="text-center py-2 font-semibold">Total</th>
                       <th className="text-center py-2 font-bold text-xs">Cerveza</th>
                       <th className="text-center py-2 font-bold text-xs">Tinto</th>
                       <th className="text-center py-2 font-bold text-xs">Refresco</th>
@@ -364,7 +364,7 @@ export default function AsistenciaPage() {
                     ))}
                     {dashboard.length > 1 && (
                       <tr className="border-t-2 border-[var(--border-color)] bg-[var(--bg-page)] font-bold">
-                        <td className="py-2">Total fiesta</td>
+                        <td className="py-2 font-semibold">Total de la fiesta</td>
                         <td className="text-center">{dashboard.reduce((s, d) => s + d.total, 0)}</td>
                         <td className="text-center">{dashboard.reduce((s, d) => s + d.cervezas, 0)}</td>
                         <td className="text-center">{dashboard.reduce((s, d) => s + d.tintos, 0)}</td>

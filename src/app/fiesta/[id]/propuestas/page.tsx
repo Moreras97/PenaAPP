@@ -99,7 +99,7 @@ export default function PropuestasPage() {
 
   return (
     <div>
-      <PageHeader title="Propuestas de Comida" description="Propón menús para cada día de fiesta" actions={
+      <PageHeader title="Comida" description="Propón qué comer o cenar cada día de la fiesta" actions={
         <Button onClick={() => setShowModal(true)}><Plus className="w-4 h-4 mr-1" /> Proponer menú</Button>
       } />
 
@@ -177,52 +177,52 @@ export default function PropuestasPage() {
         )}
       </div>
 
-      <Modal open={showModal} onClose={() => setShowModal(false)} title="Nueva propuesta de menú">
+      <Modal open={showModal} onClose={() => setShowModal(false)} title="Proponer un menú">
         <div className="space-y-3">
           <div>
-            <label className="block text-sm font-bold mb-1">Día</label>
+            <label className="block text-sm font-semibold mb-1">Día</label>
             <select value={form.dia_fiesta_id} onChange={e => setForm({ ...form, dia_fiesta_id: e.target.value })}
-              className="w-full border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-3 py-2 font-medium" required>
+              className="w-full" required>
               <option value="">Seleccionar día</option>
               {dias.map(d => (
                 <option key={d.id} value={d.id}>{d.fecha}{d.nombre ? ` - ${d.nombre}` : ""}</option>
               ))}
             </select>
             {dias.length === 0 && (
-              <p className="text-xs text-red-500 mt-1">No hay días configurados. El admin debe añadir días o crear una fiesta nueva.</p>
+              <p className="text-xs text-red-500 mt-1">No hay días configurados. El organizador debe añadir días o crear una fiesta nueva.</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">Tipo</label>
+            <label className="block text-sm font-semibold mb-1">¿Comida o cena?</label>
             <div className="flex gap-2">
               <button type="button" onClick={() => setForm({ ...form, tipo_comida: "comida" })}
-                className={"flex-1 px-3 py-2 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + (form.tipo_comida === "comida" ? "bg-[var(--color-yellow)]" : "bg-[var(--bg-page)]")}>
+                className={"flex-1 px-3 py-2 text-sm font-semibold rounded-[var(--radius-md)] border transition-colors " + (form.tipo_comida === "comida" ? "bg-[var(--color-yellow)] border-[var(--color-yellow)]" : "bg-[var(--bg-surface)] border-[var(--border-color)]")}>
                 <Sun className="w-4 h-4 inline mr-1" /> Comida
               </button>
               <button type="button" onClick={() => setForm({ ...form, tipo_comida: "cena" })}
-                className={"flex-1 px-3 py-2 text-sm font-bold rounded-[var(--radius-md)] border-brutalist shadow-brutalist-sm press-down " + (form.tipo_comida === "cena" ? "bg-[var(--color-secondary)] text-white" : "bg-[var(--bg-page)]")}>
+                className={"flex-1 px-3 py-2 text-sm font-semibold rounded-[var(--radius-md)] border transition-colors " + (form.tipo_comida === "cena" ? "bg-[var(--color-secondary)] text-white border-[var(--color-secondary)]" : "bg-[var(--bg-surface)] border-[var(--border-color)]")}>
                 <Moon className="w-4 h-4 inline mr-1" /> Cena
               </button>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">Hora (opcional)</label>
+            <label className="block text-sm font-semibold mb-1">Hora (opcional)</label>
             <input type="time" value={form.hora} onChange={e => setForm({ ...form, hora: e.target.value })}
-              className="w-full border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-3 py-2 font-medium" />
+              className="w-full" />
           </div>
 
           <div>
-            <label className="block text-sm font-bold mb-1">Menú propuesto</label>
+            <label className="block text-sm font-semibold mb-1">Menú propuesto</label>
             <textarea value={form.menu} onChange={e => setForm({ ...form, menu: e.target.value })}
-              className="w-full border-brutalist shadow-brutalist-sm rounded-[var(--radius-sm)] px-3 py-2 font-medium" rows={3}
+              className="w-full" rows={3}
               placeholder="Ej: Parrillada de carne con ensalada y patatas" required />
           </div>
 
           <div className="flex items-center gap-2">
             <input type="checkbox" id="se_encarga" checked={form.se_encarga}
-              onChange={e => setForm({ ...form, se_encarga: e.target.checked })} />
+              onChange={e => setForm({ ...form, se_encarga: e.target.checked })} className="w-4 h-4" />
             <label htmlFor="se_encarga" className="text-sm font-medium">Me encargo de cocinarlo</label>
           </div>
 

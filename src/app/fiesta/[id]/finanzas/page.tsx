@@ -83,7 +83,7 @@ export default function FinanzasPage() {
 
   return (
     <div>
-      <PageHeader title="Finanzas" description="Dinero de la peña y gastos personales" actions={
+      <PageHeader title="Gastos" description="El dinero de la peña y lo que se debe entre todos" actions={
         <Button onClick={() => setShowModal(true)}><Plus className="w-4 h-4 mr-1" /> Nuevo gasto</Button>
       } />
 
